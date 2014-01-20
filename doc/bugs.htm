@@ -1,0 +1,133 @@
+<html><head>
+<title>SimpleHTTPd - Known Bugs</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?bugs">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/roadkill.gif" width=40 height=40 alt="Bugs & ToDo">
+</td><td valign=center><font size=+2>
+Known Bugs
+</font></td></tr>
+</table>
+
+<p>
+Depending on the operating system and the environment, there are certain bugs
+within this program or its modules. The table shows the type of bug, where it
+exists and which platforms are affected by it. These short cuts are used:<ul>
+<li><i><font color="blue">OS/2</font></i> = IBM OS/2 3.x, 4.x
+<li><i><font color="red">Win32</font></i> = Microsoft Windows 95, 98, NT, 2000
+<li><i><font color="green">Unix</font></i> = variouse Unix-style operating
+systems
+</ul>
+Problems, which have been solved, are marked by <i>italic text</i> and a note,
+when the bug was fixed.
+</p>
+
+<a name="bug-list"></a>
+<div align=center>
+<table border=1 width="98%"><! -------------------------------------- >
+<tr><th rowspan=2>Type of Bug<th rowspan=2>Location</th>
+<th rowspan=2>Fixed?<th colspan=3>Operating System</tr>
+<tr><th><font color="blue">OS/2</font><th><font color="red">Win32</font></th>
+<th><font color="green">Unix</font></th>
+</tr><a name="administration_fails"></a><tr bgcolor="white"><! ------ >
+<td><i>When first administration is done and a user name &amp; password for a
+WWW administrator is set, login fails with a security alert.</i></td>
+<td align=center>shttpd<td align=center>yes</td>
+<td align=center><font color="blue">yes</font></td>
+<td align=center><font color="red">yes</font></td>
+<td align=center><font color="green">yes</font></tr>
+<tr><td bgcolor="silver" colspan=6><b><u>Solution:</u></b><br>
+<font color="gray">
+Some browsers have big problems when using the HyperText Transfer Protocol's
+method POST for transfering data. It seems, that some of them truncate or
+corrupt data. Some buggy ones are:<ul>
+<li><i>Netscape Navigator/Communicator 4.05</i><br><font size=-2>
+corrupts data</font>
+<li><i>Netscape Navigator/Communicator 4.04</i><br><font size=-2>
+corrupts data at the 88th character of a line</font>
+<li><i>Microsoft Internet Explorer 4.0x</i><br><font size=-2>
+corrupts data with no fix scheme, but mostly after the 120th character</font>
+</ul>
+After <u>re-installing</u> the original configuration file <tt>httpd.cfg</tt>
+- you have to replace it, since it gets corrupted -, you may re-do setting a
+WWW administrator, but specify only one character each for user name and
+password! When you successfully entry the main administration menu, you may
+then select the user list of the <tt>SEC_admin</tt> group, add the correct
+data and remove the waste entry. That should work.
+</font>
+<br><b><u>Note:</u></b><br>
+Fixed with version 0.03 - HTTP method GET is also supported and used per
+default for updates of the server's configuration.
+</td>
+</tr><a name="module_load_fails"></a><tr bgcolor="white"><! --------- >
+<td>Server cannot find its modules.<td align=center>all modules</td>
+<td align=center>-<td align=center><font color="blue">yes</font></td>
+<td align=center><font color="red">yes</font><td align=center>-</tr>
+<tr><td bgcolor="silver" colspan=6><b><u>Solution:</u></b><br>
+make sure, that the path of the WWW server is specified within the list of
+DLL directories (i.e. <tt>DPATH</tt> under IBM OS/2's config.sys).</td>
+</tr><tr bgcolor="white"><! ----------------------------------------- >
+<td>Server cannot find its modules.<td align=center>all modules</td>
+<td aligne=center>-<td align=center>-</td>
+<td align=center>-<td align=center><font color="green">yes</font></tr>
+<tr><td bgcolor="silver" colspan=6><b><u>Solution:</u></b><br>
+make sure, that the path of the WWW server is specified within the
+<tt>LD_LIBRARY_PATH</tt> environment variable.</td></tr>
+</tr><a name="zombie_cgi"></a><tr bgcolor="white"><! ---------------- >
+<td><i>Connection crashes, when a certain number of CGIs is executed. It seems,
+as if sub-shells remain as zombie processes.</i></td>
+<td align=center>MOD_cgi<td align=center>yes</td>
+<td align=center><font color="blue">yes</font></td>
+<td align=center><font color="red">yes</font><td align=center>-</tr>
+<tr><td bgcolor="silver" colspan=6><b><u>Solution:</u></b><br>
+Fixed with version 0.04 - the CGI handling has been optimized, the original
+handle for stdin/stdout are now saved only one time instead of each time per
+access (Windows: stdin/stdout of WWW server isn't even redirected any-more!)
+</tr></table><! ----------------------------------------------------- >
+</div>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="copyrght.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="new.htm"><img align=right border=0 src="/gif/left.gif" width=20
+height=20 alt="&lt;&lt;"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

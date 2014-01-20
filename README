@@ -1,0 +1,84 @@
+ ------------------------------------------------------------------------------
+    This is the latest info about SimpleHTTPd and its use under various OS.
+ ------------------------------------------------------------------------------
+
+Use under ...
+        IBM OS/2
+          - requires OS/2 2.x with TCP/IP 2.0,, Warp 3.0 with IAK (Inter-
+            net Access Kit), Warp 3.0 Connect (with TCP/IP installed) or
+            Warp 4.0 (with TCP/IP installed).
+
+        Microsoft Windows 95, 98, NT, Windows 2000
+          - requires MS Win 95, 98, NT or 2000 (i.e. WIN32-API)
+          - requires Windows Sockets (TCP/IP) installed
+          - no support for old Windows 3.x!
+
+        Unix
+          - requires a Unix on a - at least - 32 bit architecture
+          - requires a ANSI-C compatible compiler for re-compilation,
+            best is gcc with ANSI-C libraries
+          - should work with IBM AIX, HP/UX, Linux, Sun Solaris 1 & 2, etc.
+
+
+
+Notes on IBM OS/2:
+        - dynamic re-configuration should work, but I don't know how to
+          send a SIGHUP to the process?! ;-)
+        - dynamic re-configuration via online administration works without
+          such problems
+        - no support for services (options '-register', '-unregister')!
+
+
+
+Notes on Microsoft Windows (32 bit):
+        - no support for SIGHUP, i.e. dynamic re-configuration by sending
+          a signal to the process doesn't work
+        - dynamic re-configuration via online administration works without
+          such problems
+        - in order to shut down a session, started from a command prompt
+          (CMD.EXE or COMMAND.COM window/full-screen), you'd better prefer
+          pressing CTRL-BREAK (not CTRL-C)!
+        - when installing as a service:
+           1) services are only available under Windows NT & 2000, but
+              not under Windows 95, nor Windows 98!
+           2) you have to be the system administrator to use '-register'
+              and '-unregister' !!!
+           3) you may have to check the settings in the windows setup
+              ('services'), especially the startup-type
+
+
+
+Notes on Unix:
+        - no support for services (options '-register', '-unregister')!
+        - when doing a recompile, please process these steps:
+           1) sh config.sh
+           2) make convert
+           3) make clean all
+          This is necessary in order to make the sources conforming to
+          Unix again.
+        - you may edit the Makefile.UNX with the editor 'vi' *only* !!!
+
+
+
+Known Bugs, Restrictions:
+        - Netscape 4.x (all versions?) seem to have a big problem with HTML
+          forms, if the contents is returns via HTTP method POST. Then, when
+          the length of the data exceeds 88 characters, the 88th character
+          is overritten by a ASCII NUL (0x00) character. You will see the
+          result, when you enter the administration section of access paths
+          and you change a path - if a character mysteriously disappears in
+          the translated path section, then the bug takes affect!
+
+          To solve this problem, SimpleHTTPd uses HTTP method GET instead of
+          POST within the online administration.               (28. Dec. 1998)
+
+        - Any other bugs and limitations: See online documentation.
+
+
+
+Copyright:
+	- SimpleHTTPd (shttpd) is now under GPL.               (19. Nov. 1999)
+
+
+
+ ------------------------------------------------------------------------------

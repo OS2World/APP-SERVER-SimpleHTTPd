@@ -1,0 +1,183 @@
+<html><head>
+<title>SimpleHTTPd - Introduction</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?intro">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/curtain.gif" width=40 height=40 alt="Introduction">
+</td><td valign=center><font size=+2>
+Introduction to SimpleHTTPd
+</font></td></tr>
+</table>
+
+<a name="shttpd"></a>
+
+<p>
+The <u>SimpleHTTPd</u> (short-name/program&nbsp;name: <tt><i>shttpd</i></tt>)
+is a simple WWW server with a small use of ressources. &quot;<i>Why another
+WWW server, when there are a lot of WWW server still in business?</i>&quot;
+you may ask yourself. Let's explain: A lot of WWW servers are platform specific
+in that way, that the server runs only on one platform or one type of platform.
+WWW servers supported on two different kinds of platforms, lets say Unix and
+Microsoft Windows NT, are rare. Some of these, which were originally written
+for Unix, have problems on the second platform, because the authors have
+problems in porting the software. For testing purposes, WWW servers often are
+too complicated or too complex.
+</p>
+
+<p>
+That's the point, where the <u>SimpleHTTPd</u> shall help. The sources were not
+written on one kind of platform in total, but have been developed on several
+operating systems, like IBM OS/2 Warp 3 &amp; 4, Microsoft Windows 95, 98, NT
+&amp; 2000, HP/UX 9.xx .. 11.xx, SunOS 4.1.4, Sun Solaris 2.4 .. 2.7, etc..
+The WWW server itself runs as a single task, splitting incoming requests on
+sub-processes, when they come in. So there are no sleeping processing,
+consuming memory. Depending on the operating system, the sub-processes are
+implemented as tasks (Unix API) or threads (MS Win32 API, OS/2 API). To avoid
+a slow-down when processing rapidly incoming requests, a spooling area for data
+(shared memory) prevents memory fragmentation and allocation on creation of a
+sub-process. (When creating a new task, that uses write access to a data area,
+the operating system normally creates a new data area with a copy of the
+original data. But if the data area is marked as shared memory, creation of a
+new copy of this data area is prohibited.)
+</p>
+
+<p>
+Another two points for me writing a WWW server were the remote administration,
+which should be independent from the operating system, and a fast interface
+for user-written routines. The <i>modules concept</i> is well known to the
+<a href="http://www.apache.org">Apache WWW server</a> and to the Microsoft
+Internet Informtion Server (and others), but within the <u>shttpd</u> the
+module handling is neutral to the operating system, i.e. a module written on
+one platform may be re-compiled on another platform without modification of the
+source code! Further, the modules have an optional destructor routine, so
+de-installation routines may be implemented.
+</p>
+
+<a name="overview"></a>
+
+<p>
+Here is a short overview with the details of the <u>shttpd</u>. The word
+<b>OS/2</b> stands for <i>IBM OS/2 Warp 3 or 4</i>, <b>Win32</b> for
+<i>Microsoft Windows 95, 98, NT or 2000</i> and <b>Unix</b> for a
+<i>Unix-style operating system</i>, like IBM AIX, *BSD, HP/UX, Linux, SunOS,
+Sun Solaris, etc..
+</p>
+
+<a name="features"></a>
+
+<div align=center>
+<table border=1 width="80%"><! -------------------------------------- >
+<tr><th>Attribute</th><th>Operating<br>System</th><th>Explanation</th>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=3>Availability</th>
+<td>OS/2</td><td>OS/2 Warp 3.0, Warp 3.0 Connect, Warp 3.0 Server,
+Warp 4.0 with Internet Access Kit or TCP/IP &gt;= 3.0</td></tr>
+<tr><td>Win32</td><td>Windows 95, 98, NT 3.51, NT 4.0, NT 5.0, 2000</td></tr>
+<tr><td>Unix</td><td>should compile (with manual adaptions) to nearly
+all Unix-like OSs, tested under: HP/UX 9.01 &amp; 10.20, SunOS 4.1.4,
+Sun Solaris 2.5.1 &amp; 2.6</td>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=3>Sub-Processes</th>
+<td>OS/2</td><td rowspan=2>... are implemented as threads.</td></tr>
+<tr><td>Win32</td></tr>
+<tr><td>Unix</td><td>... are implemented as processes.</td>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=3>Data Spooling</th>
+<td>OS/2</td><td rowspan=2>... is done in a common data area (threads use the
+same data segment).</td></tr>
+<tr><td>Win32</td></tr>
+<tr><td>Unix</td><td>... is done in shared memory (common data area for the
+processes).</td>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=3>Remote Configuration</th>
+<td>OS/2</td><td rowspan=3>... is done via a WWW browser with support for
+HTML 2.0 and HTML tables at least.</td></tr>
+<tr><td>Win32</td></tr><tr><td>Unix</td>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=4>Modules</th>
+<td>OS/2</td><td rowspan=2>... are implemented as dynamic link libraries
+(DLLs)</td></tr><tr><td>Win32</td></tr>
+<tr><td>HP/UX 9.0x</td><td>... are implemented as shared libraries with a file
+name extension <tt>*.sl</tt></td></tr>
+<tr><td>Unix (others)</td><td>... are implemented as shared libraries with a
+file extension <tt>*.so</tt></td>
+</tr><tr><! --------------------------------------------------------- >
+<th align=left rowspan=3>Key Features</th>
+<td>OS/2</td><td rowspan=3><ul>
+<li>available under various platforms (IBM OS/2 32bit, Microsoft Windows 32bit,
+Unix-style OSs)
+<li>remote administration per WWW bowser
+<li>small overhead on sub-processes
+<li>can handle multiple requests at one time (see
+<a href="copyrght.htm">Copyright notes</a> for limits)
+<li>authorization by user name and password with different authorization
+schemes
+<li>support for various MIME types (customizable)
+<li>traditional interface for dynamically created output - CGI (common gateway
+interface)
+<li>high-performance interface for dynamically created output - loadable
+modules
+<li>loadable modules with initializer, destructor, break entry and handler
+routine
+<li>support for data encryption (SSL)
+<li>support for on-the-fly data compression (gzip)
+<li>...
+</ul></tr><tr><td>Win32</td></tr><tr><td>Unix</td>
+</tr></table><! ----------------------------------------------------- >
+</div>
+
+<a name="restrictions"></a>
+
+<p>
+<b><u>Note:</u></b><br>
+Due to restrictions on file systems - eh? Anyone saying &quot;<i>FAT</i>&quot;?
+Don't forget <i>MINIX</i> and its 14-characters-on-filenames-only restriction
+... - the names of all files are 8.3 compliant. So the SimpleHTTPd server
+itself isn't called like that, but is named <tt><u>shttpd</u></tt>.
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="install.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="index.htm"><img align=right border=0 src="/gif/up.gif" width=20
+height=20 alt="index"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=toi><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

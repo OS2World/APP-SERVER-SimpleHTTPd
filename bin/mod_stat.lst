@@ -1,0 +1,8 @@
+# Information is stored like this:
+# <no. of hits> <last access time> <name>
+#  |             |                  |
+#  |             +--- time stamp    +--- reference
+#  |                  as hex-decimal     name
+#  |                  seconds since
+#  +--- number of     1970/01/01 0:00
+#       hits

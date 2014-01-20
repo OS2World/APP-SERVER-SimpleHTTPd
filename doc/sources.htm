@@ -1,0 +1,1478 @@
+<html><head>
+<title>SimpleHTTPd - Sources</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?sources">
+
+<a name="top"></a>
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/binary.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Sources of the SimpleHTTPd
+</font></td></tr>
+</table>
+
+<p>
+<b><u>Note:</u></b><br>
+<i>This section may describe in a later version all aspects of the WWW server's
+sources. But for now, it only gives details about the WWW server loadable
+modules (<a href="#API">module API</a>) and the <a href="#Server_API">server's
+API</a> for module routines. At the end, there is a description of
+<a href="#writing">how to write</a> a module.</i>
+</p>
+
+<table bgcolor="silver" border=0 width="100%">
+<tr><td>Basics</td></tr>
+</table>
+
+<p>
+When the WWW server starts-up or re-initializes, it gets a list of modules to
+load. These modules must be located to a system path, where the operation
+system searches for them. Loadable modules are implemented as <ul>
+<li><i>shared objects</i> (extension: <tt>*.so</tt>) under most Unix-like
+systems,
+<li><i>shared libraries</i> (extension: <tt>*.sl</tt>) under HP/UX,
+<li><i>dynamic link-libraries</i> (extension: <tt>*.dll</tt>) under IBM OS/2
+or Microsoft Windows 95, 98, NT, 2000 ... .
+</ul>
+Depending the operating system, some environment variables
+(<tt><i>LD_LIBRARY_PATH</i></tt> under Unix-style operating systems incl.
+HP/UX, <tt><i>DPATH</i></tt> in the <tt>CONFIG.SYS</tt> under IBM OS/2) or
+the registry (MS Windows NT) must be set.
+</p>
+
+<p>
+The loadable module itself has various entry points for the stuff to be
+handled. Some entry points are necessary, some optional. The next section gives
+a description of the module's API.
+</p>
+
+<a name="API"></a>
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><a href="#top"><img align=right border=0 width=20 height=20
+src="/gif/up.gif" alt="top"></a>Loadable Module's API</td></tr>
+</table>
+
+<p>
+The modules have an unique API (application programming interface) to the WWW
+server. There is a number of routines, which has to be implemented for working,
+and another number of other routines, which are optional. Further, a set of
+data structures is defined for information storage. Currently, the routines
+are:<dl>
+<dt><a href="#API_modAbort"><tt>modAbort()</tt></a>
+<dd>Abort handler of the module.
+<dt><a href="#API_modClear"><tt>modClear()</tt></a>
+<dd>Module destructor, called on unload of module.
+<dt><a href="#API_modConfig"><tt><i>modConfig()</i></tt></a> (reserved for
+future use)
+<dd>Configuration request for the module by the administration tool.
+<dt><a href="#API_modHandler"><tt>modHandler()</tt></a>
+<dd>Handler for incoming requests.
+<dt><a href="#API_modInit"><tt>modInit()</tt></a>
+<dd>Initializer of the module, when module is loaded.
+</dl>
+See below for a brief description of each routine.
+</p>
+
+<p><a name="API_modAbort"></a><! ------------------------------------ >
+<a name="API_HttpModAbort"></a>
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+modAbort()
+</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int modAbort( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+              <b>HttpModAbort</b> fReason );</pre></td></tr>
+<tr><td>type</td><td align=right colspan=2><i>optional</i></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>connection
+and request details of the request, which shall be aborted</td></tr>
+<tr valign=top><td><tt>fReason</tt></td><td><ul>
+<li><tt>HTTP_MOD_ABORT_UNKNOWN</tt> = unknown reason why to abort connection
+<li><tt>HTTP_MOD_TIMEOUT</tt> = request timed out
+<li><tt>HTTP_MOD_CONNECTION_LOST</tt> = connection channel got lost
+<li><tt>HTTP_MOD_SHUTDOWN</tt> = WWW server is going down
+<li><tt>HTTP_MOD_CLOSE_CHANNEL</tt> = channel is being closed, perform any
+per-connection handling (see SSL)
+</ul></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0</tt> : abort successfully completed
+<li><tt> &lt; 0</tt> : abort failed due to errors
+</li></td></tr>
+<tr><td colspan=3>The abort handler is called by the main process of the WWW
+server in order to terminate a connection due to an error condition or server
+shutdown. Please note, that the process or thread ID of the call to this
+routine may vary from the one that is handling the request! Also note, that
+an returned error does not delay a server shutdown or the abort process!
+</td></tr>
+</table></div></p>
+
+<p><a name="API_modClear"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+modClear()
+</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int modClear( void );</pre></td></tr>
+<tr><td>type</td><td align=right colspan=2><i>optional</i></td></tr>
+<tr valign=top><td>input</td><td align=center colspan=2>-</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0</tt> : module has been cleared successfully
+<li><tt> &lt; 0</tt> : module cleared with error(s)
+</ul></td></tr>
+<tr><td colspan=3>This routine is called by the main server process to tell
+a module that it'll be unloaded. This routine is also called, when the server
+re-initializes itself after a configuration change. The module itself does not
+need to remove itself from memory - this is done by the WWW server. But this
+function call is provided in order to free ressources allocated by the
+initialization routine of the module.</td></tr>
+</table></div></p>
+
+<p><a name="API_modConfig"></a><! ----------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+modConfig()
+</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int modConfig( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+               <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pCfg );</pre>
+</td></tr>
+<tr><td>type</td><td align=right colspan=2><i>optional</i></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>connection
+and request details of the request</td></tr>
+<tr valign=top><td><tt>pCfg</tt></td><td>two-way linked list with parameters,
+the module has stored within the server's configuration data area.</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0</tt> : module has been configured successfully
+<li><tt>== 1</tt> : module has no configuration handler
+<li><tt> &lt; 0</tt> : module configured with error(s)
+</ul></td></tr>
+<tr><td colspan=3>This routine provides modules with the ability of handling
+their own configuration data. Each module has its own area within the server's
+configuration data area. When a module is initialized (see
+<a href="#API_modInit"><tt><i>modInit()</i></tt></a>), it either gets this data
+or may set new (default) values. These datas are given to
+<tt><i>modConfig()</i></tt> by the <tt><i>pCfg</i></tt> parameter. The data
+may be displayed. New data is sent back to the WWW server by using a HTML
+<i>form</i> and HTTP method <i>GET</I> or <i>POST</i> (i.e. <tt><i>&lt;form
+action=&quot...&quot; method=&quotGET&quot&gt; ... &lt;/form&gt;</i></tt> or
+<tt><i>&lt;form action=&quot...&quot; method=&quotPOST&quot&gt; ...
+&lt;/form&gt;</i></tt>).
+<br>
+Because it is too difficult to explain it here, have a look at the
+<a href="/samples/mod_test.c"><tt>MOD_test</tt></a> sample module program.
+<br>
+<b><u>Note:</u></b> A module may refuse a configuration request be returning
+a value of <b>+1</b>. The administration tool then returns a note, that the
+module does not have a configuration entry - same, as if
+<tt><i>modConfig()</i></tt> wouldn't be implemented.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_modHandler"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+modHandler()
+</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int modHandler( <a href="#API_HttpConnection">PHttpConnection</a> pConn );</pre>
+</td></tr>
+<tr><td>type</td><td align=right colspan=2><b>must be implemented!</b></td></tr>
+<tr valign=top><td>input</td><td><tt>pConn</tt></td><td>connection and request
+details of the request, which shall be aborted</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0</tt> : request processed with no errors, WWW server returns
+<tt>HTTP_RC_OKAY</tt> (code 200)
+<li><tt> &lt; 0</tt> : module internal error, WWW server returns
+<tt>HTTP_RC_INTERNAL_ERROR</tt> (code 500)
+<li><tt> > 0</tt> : module returns an individual error, the return code is any
+HTTP return code
+</ul></td></tr>
+<tr><td colspan=3>The handler routine is the main entry of a module. It
+processes an incoming request. The main WWW server process starts on each
+incoming request a new process (Unix) or thread (Win32, OS/2), which then
+results in a call to this routine, if the path maps to this module. The module
+the takes control over the request handling. For proper completion, after
+successful or unsuccessful processing of the request, the control must be
+returned to the WWW server - <b>no</b> <tt>exit()</tt> calls!</td></tr>
+</table></div></p>
+
+<p><a name="API_modInit"></a><! ------------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+modInit()
+</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int modInit( <a href="#API_HttpRoutines">PHttpRoutines</a> pRoutines,
+             <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pCfg,
+             int fNew );</pre></td></tr>
+<tr><td>type</td><td align=right colspan=2>optional</td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>pRoutines</tt></td>
+<td>list of entry points of routines within the WWW server for the module. This
+list is a easy way of accessing public routines of the WWW server, without
+having the need of extracting them to a separate link-library, that has to be
+loaded by WWW server and module(s).</td></tr>
+<tr valign=top><td><tt>pCfg</tt></td><td>two-way linked list of configuration
+data for this module. You may use the
+<a href="#Server_API"><tt><i>LinkedList...()</i></tt></a>
+calls of the WWW server API for processing.</td></tr>
+<tr valign=top><td><tt>fNew</tt></td><td>signal for the module, that a previous
+configuration of this module cannot be found. If <tt><i>fNew</i></tt> is set
+<u>unequal 0</u>, the module should set the defaults for its configuration.
+</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0</tt> : module successfully initialized
+<li><tt> &lt; 0</tt> : module could not be initialized and may not be used
+</ul></td></tr>
+<tr><td colspan=3>The module initializer may request ressources, which may then
+be used when handling requests. Configuration data is send by the WWW server.
+If there was no previous configuration and <tt><i>fNew != 0</i></tt> is set,
+the module should initialize its configuration by the defaults. The WWW server
+then automatically stores this (default) configuration for further
+initialization calls. Online configuration shall be done via the
+<a href="#API_modConfig"><tt><i>modConfig()</i></tt></a> routine.</td></tr>
+</table></div></p>
+
+<a name="Server_API"></a>
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><a href="#top"><img align=right border=0 width=20 height=20
+src="/gif/up.gif" alt="top"></a>WWW server's API for module routines</td></tr>
+</table>
+
+<ul><li>Data Structures<ul>
+<li><a href="#API_HttpConnection"><tt>HttpConnection, PHttpConnection</tt></a>
+<li><a href="#API_HttpModAbort"><tt>HttpModAbort</tt></a>
+<li><a href="#API_HttpProtocol"><tt>HttpProtocol, PHttpProtocol</tt></a>
+<li><a href="#API_HttpReqMethod"><tt>HttpReqMethod</tt></a>
+<li><a href="#API_HttpRoutines"><tt>HttpRoutines, PHttpRoutines</tt></a>
+<li><a href="#API_HttpServer"><tt>HttpServer, PHttpServer</tt></a>
+<li><a href="#API_HttpSrvLaunch"><tt>HttpSrvLaunch, PHttpSrvLaunch</tt></a>
+<li><a href="#API_PTwoWayLinkedList"><tt>TwoWayLinkedList, PTwoWayLinkedList</tt></a>
+</ul><li><a href="#API_Definitions">Definitions</a>
+<li>Routines<ul>
+<li><a href="#API_HttpAdmGetSequence"><tt>HttpAdmGetSequence()</tt></a>
+<li><a href="#API_HttpBase64Decode"><tt>HttpBase64Decode()</tt></a>
+<li><a href="#API_HttpCheckConns"><tt>HttpCheckConns()</tt></a>
+<li><a href="#API_HttpInit"><tt>HttpInit()</tt></a>
+<li><a href="#API_HttpGetChar"><tt>HttpGetChar()</tt></a>
+<li><a href="#API_HttpGetHttpErrorText"><tt>HttpGetHttpErrorText()</tt></a>
+<li><a href="#API_HttpGetLine"><tt>HttpGetLine()</tt></a>
+<li><a href="#API_HttpGetPathToBin"><tt>HttpGetPathToBin()</tt></a>
+<li><a href="#API_HttpGetServerInternalData"><tt>HttpGetServerInternalData()</tt></a>
+<li><a href="#API_HttpLog"><tt>HttpLog()</tt></a>
+<li><a href="#API_HttpParseQueryStr"><tt>HttpParseQueryStr()</tt></a>
+<li><a href="#API_HttpParseURL"><tt>HttpParseURL()</tt></a>
+<li><a href="#API_HttpPrintf"><tt>HttpPrintf()</tt></a>
+<li><a href="#API_HttpPuts"><tt>HttpPuts()</tt></a>
+<li><a href="#API_HttpRead"><tt>HttpRead()</tt></a>
+<li><a href="#API_HttpRedirect"><tt>HttpRedirect()</tt></a>
+<li><a href="#API_HttpScheduleAt"><tt>HttpScheduleAt()</tt></a>
+<li><a href="#API_HttpSendHeader"><tt>HttpSendHeader()</tt></a>
+<li><a href="#API_HttpSockInit"><tt>HttpSockInit()</tt></a>
+<li><a href="#API_HttpSystem"><tt>HttpSystem()</tt></a>
+<li><a href="#API_HttpUngetChar"><tt>HttpUngetChar()</tt></a>
+<li><a href="#API_HttpWrite"><tt>HttpWrite()</tt></a>
+<li><a href="#API_ListAdd"><tt>ListAdd()</tt></a>
+<li><a href="#API_ListClear"><tt>ListClear()</tt></a>
+<li><a href="#API_ListDelete"><tt>ListDelete()</tt></a>
+<li><a href="#API_ListFind"><tt>ListFind()</tt></a>
+<li><a href="#API_ListGet"><tt>ListGet()</tt></a>
+<li><a href="#API_ListNext"><tt>ListNext()</tt></a>
+<li><a href="#API_ListPrev"><tt>ListPrev()</tt></a>
+<li><a href="#API_ListReplace"><tt>ListReplace()</tt></a>
+<li><a href="#API_ListRewind"><tt>ListRewind()</tt></a>
+<li><a href="#API_memShmAlloc"><tt>memShmAlloc()</tt></a>
+<li><a href="#API_memShmFree"><tt>memShmFree()</tt></a>
+<li><a href="#API_memSrvAlloc"><tt>memSrvAlloc()</tt></a>
+<li><a href="#API_memSrvFree"><tt>memSrvFree()</tt></a>
+</ul></ul>
+
+<p><a name="API_HttpConnection"></a><! ------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpConnection, PHttpConnection</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+typedef struct s_HttpConnection {
+        <a href="#API_HttpServer">PHttpServer</a>      psServer;
+        int (PROC_CALL_PTR pTCPsend)(
+                struct s_HttpConnection *pConn,
+                unsigned char *psz,
+                int cb
+        );
+        int (PROC_CALL_PTR pTCPrecv)(
+                struct s_HttpConnection *pConn,
+                unsigned char *psz,
+                int cb
+        );
+        int              iCommSocket;
+        int              iPID;
+        int              iTimeOut;
+        int              iReadIdx;
+        int              iWriteIdx;
+        int              cLastChar;
+        unsigned char    szBuffer[8192];
+        unsigned char    szTemp[8192];
+        char             szRemoteAddr[32];
+        char             szRemoteHost[64];
+        <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> pHttpSSLInfo;
+        <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> pHttpCallHdr;
+        <a href="#API_HttpReqMethod">HttpReqMethod</a>    fReqMethod;
+        int              fReqHttpVersion;
+        unsigned long    fReqInfo;
+        unsigned char   *pszAuthScheme;
+        unsigned char   *pszAuthUser;
+        unsigned char   *pszAuthPass;
+        unsigned char   *pszLocation;
+        unsigned char   *pszPath;
+        unsigned char   *pszPathInfo;
+        unsigned char   *pszQueryString;
+        unsigned long    cbContentLength;
+        unsigned long    cbContentRead;
+        <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> pHttpRespHdr;
+        int (PROC_CALL_PTR modAbort)(
+                struct s_HttpConnection *pConn,
+                HttpModAbort fReason
+        );
+        void            *pSSL;
+        void            *psZ;
+        void            *pZBuffer;
+        unsigned long    ulZCRC32;
+} HttpConnection, *PHttpConnection;</pre></td></tr>
+<tr><th>member</th><th>purpose</th></tr>
+<tr valign=top><td><tt>psServer</tt></td><td>pointer to server structure
+<a href="#API_HttpServer"><tt><i>HttpServer</i></tt></a>.</td></tr>
+<tr valign=top><td><tt>pTCPsend()</tt></td><td>either <tt><u>NULL</u></tt>, if
+default TCP/IP sending routine should be used, or pointer to a TCP/IP sending
+routine (is used by the SSL part of the WWW server).</td></tr>
+<tr valign=top><td><tt>pTCPrecv()</tt></td><td>either <tt><u>NULL</u></tt>, if
+default TCP/IP receiving routine should be used, or pointer to a TCP/IP
+receiving routine (is used by the SSL part of the WWW server).</td></tr>
+<tr valign=top><td><tt>iCommSocket</tt></td><td>socket of current request.</td></tr>
+<tr valign=top><td><tt>iPID</tt></td><td>process or thread ID of handler
+routine for the current request.</td></tr>
+<tr valign=top><td><tt>iTimeOut</tt></td><td>current time-out in seconds, if
+this counter hits <i>0</i>, a time-out is detected.</td></tr>
+<tr valign=top><td><tt>iReadIdx, iWriteIdx</tt></td><td rowspan=3>used
+internally by <a href="#API_HttpRead"><tt><i>HttpRead()</i></tt></a> and
+<a href="#API_HttpWrite"><tt><i>HttpWrite()</i></tt></a>.</td></tr>
+<tr valign=top><td><tt>cLastChar</tt></td></tr>
+<tr valign=top><td><tt>szBuffer</tt></td></tr>
+<tr valign=top><td><tt>szTemp</tt></td><td>used by
+<a href="#API_HttpPrintf"><tt><i>HttpPrintf()</i></tt></a>, but may also be
+used for personal purposes (temporary data storage).</td></tr>
+<tr valign=top><td><tt>szRemoteAddr</tt></td><td>IP address of requester.</td></tr>
+<tr valign=top><td><tt>szRemoteHost</tt></td><td>host name of requester.</td></tr>
+<tr valign=top><td><tt>pHttpSSLInfo</tt></td><td>two-way linked list with SSL
+info about the current connection. The list will only be filled, when
+<tt><i>fReqInfo</i></tt> has bit <tt><i>HTTP_REQ_SSL_ACTIVE</i></tt> set!</td></tr>
+<tr valign=top><td><tt>pHttpCallHdr</tt></td><td>two-way linked list with HTTP
+header of incoming request.</td></tr>
+<tr valign=top><td><tt>fReqMethod</tt></td><td>HTTP request method.</td></tr>
+<tr valign=top><td><tt>fReqHttpVersion</tt></td><td>version of incoming HTTP
+request header, main version ist stored in 10s, minor version in 1s. HTTP
+version <i>HTTP/1.0</i> is stored as <tt><i>10</i></tt>.</td></tr>
+<tr valign=top><td><tt>fReqInfo</tt></td><td>a bit-wise coded data area, where
+informations concerning the request and its handling is stored. These bits are
+defined:<ul>
+<li><tt>HTTP_REQ_KEEP_ALIVE</tt> = request for keeping the connection alive
+after processing the current request detected. Set by WWW server.
+<li><tt>HTTP_REQ_REUSE_CHANNEL</tt> = answer to the WWW server on
+<tt><i>HTTP_REQ_KEEP_ALIVE</i></tt>. If set, the channel is not closed, but
+kept alive.
+<li><tt>HTTP_REQ_GZIP_ACTIVE</tt> = set, when on-the-fly compression for
+the response is enabled (gzip compression).
+<li><tt>HTTP_REQ_SSL_ACTIVE</tt> = set, when SSL online encryption/decryption
+takes place, i.e. a SSL connection is used.
+<li><tt>HTTP_REQ_ERROR</tt> = error during processing of the request. This
+aborts <tt><i>HTTP_REQ_REUSE_CHANNEL</i></tt>.
+<li><tt>HTTP_RESP_HEADER_SENT</tt> = response header has been sent.
+</ul></td></tr>
+<tr valign=top><td><tt>pszAuthScheme</tt></td><td>if not set
+<tt><i>NULL</i></tt>, references name of authorization scheme.</td></tr>
+<tr valign=top><td><tt>pszAuthUser</tt></td><td>if set, specfies name of user.</td></tr>
+<tr valign=top><td><tt>pszAuthPass</tt></td><td>if set, (decrypted) password
+of authorized user. <b><u>Note:</u></b> If the authorization is resolved by the
+WWW server (i.e. an authorization scheme is set within the WWW server's
+configuration), the original password is hidden and only a single '<tt>*</tt>'
+is set instead of it.</td></tr>
+<tr valign=top><td><tt>pszLocation</tt></td><td>URI of request.</td></tr>
+<tr valign=top><td><tt>pszPath</tt></td><td>resolved path of the request, e.g.
+the local system's path to the object.</td></tr>
+<tr valign=top><td><tt>pszPathInfo</tt></td><td>if set, points to additional
+path informations within <tt><i>pszPath</i></tt>.</td></tr>
+<tr valign=top><td><tt>pszQueryString</tt></td><td>if query data is given in
+the URI, this pointer is set on it.</td></tr>
+<tr valign=top><td><tt>cbContentLength</tt></td><td>if set to a value greater
+0, there is pending data, which may be read via
+<a href="#API_HttpRead"><tt><i>HttpRead()</i></tt></a>.</td></tr>
+<tr valign=top><td><tt>cbContentRead</tt></td><td>used by
+<a href="#API_HttpRead"><tt><i>HttpRead()</i></tt></a> in order to determine,
+how many bytes were already read.</td></tr>
+<tr valign=top><td><tt>modAbort()</tt></td><td>pointer to abort handler of the
+module if existing. Used by the abort and time-out handler of the WWW server.</td></tr>
+<tr valign=top><td><tt>pSSL</tt></td><td>pointer to SSL specific data
+- this entry is not intended for user purposes.</td></tr>
+<tr valign=top><td><tt>psZ</tt></td><td>pointer to on-the-fly data compression
+information block.</td></tr>
+<tr valign=top><td><tt>pZBuffer</tt></td><td>pointer to on-the-fly data
+compression Z buffer.</td></tr>
+<tr valign=top><td><tt>ulZCRC32</tt></td><td>CRC-32 value on un-compressed
+data.</td></tr>
+
+</table></div></p>
+
+<p><a name="API_HttpProtocol"></a><! -------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpProtocol, PHttpProtocol</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+<i>typedef enum e_HttpProtocol { ... }</i> HttpProtocol,
+                                  *PHttpProtocol;</pre></td></tr>
+<tr valign=top><th>value</th><th>meaning</th></tr>
+<tr valign=top><td><tt>HTTP_UNKNOWN_PROTOCOL</tt></td>
+<td>unknown transfer protocol</td></tr>
+<tr valign=top><td><tt>HTTP_FTP</tt></td><td>file transfer protocol (FTP)</td></tr>
+<tr valign=top><td><tt>HTTP_HTTP</tt></td><td>hypertext transfer protocol
+(HTTP)</td></tr>
+<tr valign=top><td><tt>HTTP_HTTPS</tt></td><td>hypertext transfer protocol over
+secure socket layer (HTTP over SSL)</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpReqMethod"></a><! ------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpReqMethod</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+<i>typedef enum e_HttpReqMethod { ... }</i> HttpReqMethod;</pre></td></tr>
+<tr valign=top><th>value</th><th>meaning</th></tr>
+<tr valign=top><td><tt>HTTP_UNKNOWN_METHOD</tt></td>
+<td>HTTP method not known</td></tr>
+<tr valign=top><td><tt>HTTP_GET</tt></td><td>HTTP request method for getting
+a document - mostly used on WWW servers for getting HTML pages.</td></tr>
+<tr valign=top><td><tt>HTTP_HEAD</tt></td><td>HTTP request for header
+information on a document (size, type, etc.), without transfer of the data.</td></tr>
+<tr valign=top><td><tt>HTTP_POST</tt></td><td>HTTP method for sending data to
+a WWW server - often used on HTML forms. Used for transfering more data than
+possible by <tt><i>HTTP_GET</i></tt>.</td></tr>
+<tr valign=top><td><tt>HTTP_PUT</tt></td><td>like <tt><i>HTTP_POST</i></tt>.
+</td></tr>
+<tr valign=top><td><tt>HTTP_DELETE</tt></td><td>HTTP method for deleting a data
+ressource.</td></tr>
+<tr valign=top><td><tt>HTTP_LINK</tt></td><td>HTTP method for creating a link
+to a document.</td></tr>
+<tr valign=top><td><tt>HTTP_UNLINK</tt></td><td>HTTP method for deleting a link
+on a document.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpRoutines"></a><! -------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpRoutines, PHttpRoutines</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+typedef struct s_HttpRoutines {
+        /* ... */
+} HttpRoutines, *PHttpRoutines;
+</pre></td></tr>
+<tr><td>Used by <a href="#API_HttpInit"><tt><i>HttpInit()</i></tt></a> within
+a loadable module for initializing an internal list of WWW server API routines.
+The <a href="#Server_API">above mentioned routines</a> are accessible via
+macros defined in <tt>include/http.h</tt> and the internal list.
+</table></div></p>
+
+<p><a name="API_HttpServer"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpServer, PHttpServer</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+typedef struct s_HttpServer {
+        int              fSched;
+        int              cbConnections;
+        int              iTcpSocket;
+        int              iTcpSSLSocket;
+        int              iPort;
+        int              iSSLPort;
+        char             szLocalAddr[32];
+        char             szLocalHost[64];
+        char             szAdmin[64];
+} HttpServer, *PHttpServer;</pre></td></tr>
+<tr><th>member</th><th>purpose</th></tr>
+<tr valign=top><td><tt>fSched</tt></td><td>status of background
+scheduler, is either<ul>
+<li><tt>-1</tt> = scheduler aborting in progress,
+<li><tt>0</tt> = scheduler stopped, or
+<li><tt>+1</tt> = scheduler running.
+</ul></td></tr>
+<tr valign=top><td><tt>cbConnections</tt></td><td>number of open connections
+to the WWW server<ul>
+<li><tt>&gt;= 0</tt> = number of open connections,
+<li><tt>== -1</tt> = shutdown in progress.
+</ul></td></tr>
+<tr valign=top><td><tt>iTcpSocket</tt></td><td>main socket, where WWW server
+waits for incoming requests.</td></tr>
+<tr valign=top><td><tt>iTcpSocket</tt></td><td>SSL socket, where WWW server
+waits for incoming SSL requests (0 = not available).</td></tr>
+<tr valign=top><td><tt>iPort</tt></td><td>port number of TCP/IP port of WWW
+server.</td></tr>
+<tr valign=top><td><tt>iSSLPort</tt></td><td>port number of TCP/IP port
+of WWW SSL server (0 = not available).</td></tr>
+<tr valign=top><td><tt>szLocalAddr</tt></td><td>IP address of WWW server</td></tr>
+<tr valign=top><td><tt>szLocalHost</tt></td><td>host name of WWW server</td></tr>
+<tr valign=top><td><tt>szAdmin</tt></td><td>eMail address of WWW server's
+administrator</td></tr>
+<tr valign=top><td><tt>
+</tt></td><td>
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpSrvLaunch"></a><! ------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpSrvLaunch, PHttpSrvLaunch</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+typedef struct s_HttpSrvLaunch {
+        int              iDay;
+        int              iHour;
+        int              iMin;
+        void (* PROC_CALL pProc)(void *pArg);
+        void            *pArg;
+} HttpSrvLaunch, *PHttpSrvLaunch;
+</pre></td></tr>
+<tr><th>member</th><th>purpose</th></tr>
+<tr valign=top><td><tt>iDay</tt></td><td>day of year/week, to launch
+application, these values are possible:<ul>
+<li><tt>-1</tt> = launch every day
+<li><tt>0</tt> .. <tt>365</tt> = launch at specified day of year, Jan. 1st = 0
+<li><tt>400</tt>, <tt>401</tt> .. <tt>406</tt> = launch every sunday, monday,
+..., saturday
+</ul></td></tr>
+<tr valign=top><td><tt>iHour</tt></td><td>hour to launch application, with
+<tt>-1</tt> = every hour and <tt>0</tt> .. <tt>23</tt> = given hour.</td></tr>
+<tr valign=top><td><tt>iMin</tt></td><td>minute to launch application, with
+<tt>-1</tt> = every minute and <tt>0</tt> .. <tt>59</tt> = given minute.
+</td></tr>
+<tr valign=top><td><tt>pProc</tt></td><td>if set unequal <tt><i>NULL</i></tt>,
+this represents a pointer to the procedure to be launched at the given date or
+interval.</td></tr>
+<tr valign=top><td><tt>pArg</tt></td><td>optional parameter on call to
+<tt><i>pProc</i></tt>.</td></tr>
+</table></div></p>
+
+
+<p><a name="API_PTwoWayLinkedList"></a><! --------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+TwoWayLinkedList, PTwoWayLinkedList</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=2><pre>
+typedef struct s_TwoWayLinkedList {
+        unsigned char             *pszText;
+        struct s_TwoWayLinkedList *pPrev,
+                                  *pNext;
+} TwoWayLinkedList, *PTwoWayLinkedList;</pre></td></tr>
+<tr><th>member</th><th>purpose</th></tr>
+<tr valign=top><td><tt>pszText</tt></td><td>text stored at this element.</td></tr>
+<tr valign=top><td><tt>pPrev</tt></td><td>pointer to previous element or
+<tt><i>NULL</i></tt> if this is the first element in the list.</td></tr>
+<tr valign=top><td><tt>pNext</tt></td><td>pointer to next element or
+<tt><i>NULL</i></tt> if this is the last element in the list.</td></tr>
+<tr><td colspan=2><b><u>Note:</u></b><br>
+You may use the <a href="#Server_API"><tt></i>List...()</i></tt></a> for
+processing two-way linked lists.</td></tr>
+</table></div></p>
+
+<p><a name="API_Definitions"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1>Definitions</font></td></tr>
+<tr><th>definition</th><th>description</th></tr>
+<tr><td><tt>HTTP_REQ_...</tt></td><td colspan=2>used on
+<tt><i><a href="#API_HttpConnection">HttpConnection</a>.fReqInfo</i></tt>.
+See there for details.</td></tr>
+<tr><td align=center>-</td><td colspan=2>HTTP response codes</td></tr>
+<tr><td><tt>HTTP_RC_CONTINUE</tt></td><td><tt>100</tt></td><td>continue with
+request</td></tr>
+<tr><td><tt>HTTP_RC_OK</tt></td><td><tt>200</tt></td><td>request completed
+sucessfully</td></tr>
+<tr><td><tt>HTTP_RC_MULTIPLE_CHOICES</tt></td><td><tt>300</tt></td><td>URI fits
+more than one local object</td></tr>
+<tr><td><tt>HTTP_RC_MOVED_PERMANENTLY</tt></td><td><tt>301</tt></td><td>URI
+is no longer valid, use returned one instead</td></tr>
+<tr><td><tt>HTTP_RC_MOVED_TEMPORARILY</tt></td><td><tt>302</tt></td><td>URI
+is currently not valid, use returned one instead</td></tr>
+<tr><td><tt>HTTP_RC_BAD_REQUEST</tt></td><td><tt>400</tt></td><td>bad request
+(format)</td></tr>
+<tr><td><tt>HTTP_RC_UNAUTHORIZED</tt></td><td><tt>401</tt></td><td>un-authorized
+access to a protected ressource</td></tr>
+<tr><td><tt>HTTP_RC_PAYMENT_REQUIRED</tt></td><td><tt>402</tt></td><td>payment
+is required for access</td></tr>
+<tr><td><tt>HTTP_RC_FORBIDDEN</tt></td><td><tt>403</tt></td><td>access to
+ressource is forbidden</td></tr>
+<tr><td><tt>HTTP_RC_NOT_FOUND</tt></td><td><tt>404</tt></td><td>ressource not
+found</td></tr>
+<tr><td><tt>HTTP_RC_METHOD_NOT_ALLOWED</tt></td><td><tt>405</tt></td><td>invalid
+(or not-allowed) HTTP request method</td></tr>
+<tr><td><tt>HTTP_RC_REQUEST_TIMEOUT</tt></td><td><tt>408</tt></td><td>request
+timed out prior getting all request data</td></tr>
+<tr><td><tt>HTTP_RC_CONFLICT</tt></td><td><tt>409</tt></td><td>conflicting
+situation</td></tr>
+<tr><td><tt>HTTP_RC_GONE</tt></td><td><tt>410</tt></td><td>WWW server has
+gone</td></tr>
+<tr><td><tt>HTTP_RC_LENGTH_REQUIRED</tt></td><td><tt>411</tt></td><td>no content
+length given on request with HTTP method <tt><i>POST</i></tt> or
+<tt><i>PUT</i></tt></td></tr>
+<tr><td><tt>HTTP_RC_SSL_REQUIRED</tt></td><td><tt>499</tt></td><td>
+(<i>SimpleHTTPd</i>-specific error code) a SSL connection is necessary for
+access to this information</td></tr>
+<tr><td><tt>HTTP_RC_INTERNAL_ERROR</tt></td><td><tt>500</tt></td><td>internal
+WWW server error</td></tr>
+<tr><td><tt>HTTP_RC_NOT_IMPLEMENTED</tt></td><td><tt>501</tt></td><td>not
+implemented feature or function requested</td></tr>
+<tr><td><tt>HTTP_RC_BAD_GATEWAY</tt></td><td><tt>502</tt></td><td>gateway (like
+common gateway interface - CGI) did not respond correctly</td></tr>
+<tr><td><tt>HTTP_RC_SERVICE_UNAVAILABLE</tt></td><td><tt>503</tt></td><td>service
+is not available</td></tr>
+<tr><td><tt>HTTP_RC_GATEWAY_TIME_OUT</tt></td><td><tt>504</tt></td><td>while
+waiting for the response to a request, there was a time-out situation on the
+gateway interface (e.g. CGI)</td></tr>
+<tr><td><tt>HTTP_RC_UNSUPPORTED_VERSION</tt></td><td><tt>505</tt></td><td>the
+given HTTP request version is not supported</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpAdmGetSequence"></a><! -------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpAdmGetSequence()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+unsigned char * HttpAdmGetSequence( void );</pre></td></tr>
+<tr valign=top><td>input</td><td align=center colspan=2>-</td></tr>
+<tr valign=top><td>return</td><td><tt>u. char *</tt></td><td><ul>
+<li><tt>== NULL</tt> : error
+<li><tt>!= NULL</tt> : string with sequence number
+</ul></td></tr>
+<tr><td colspan=3>returns the currently valid sequence number, which has to
+be specified on configuration changes (see
+<a href="#API_modConfig"><tt><i>modConfig()</i></tt></a>, too).
+<br><b><u>Note:</u></b> Was first introduced in shttpd V 0.2.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpBase64Decode"></a><! ---------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpBase64Decode()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+unsigned char * HttpBase64Decode(
+        unsigned char *pszBase64 );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pszBase64</tt></td><td>string with Base-64
+encoded data</td></tr>
+<tr valign=top><td>return</td><td><tt>u. char *</tt></td><td><ul>
+<li><tt>== NULL</tt> : error during decode
+<li><tt>!= NULL</tt> : string to decoded data
+</ul></td></tr>
+<tr><td colspan=3>decodes Base-64 encoded data and returns it as string, which
+is duplicated via <tt><i>strdup()</i></tt>. I.e. you have to <u>free</u> the
+memory associated with the returned pointer!</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpCheckConns"></a><! ------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpCheckConns()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpCheckConns( void );</pre></td></tr>
+<tr valign=top><td>input</td><td align=center><i>none</i></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;= 0</tt> : number of open connections
+<li><tt>== -1</tt> : shutdown in progress
+</ul></td></tr>
+<tr><td colspan=3>returns the number of currently open connections to the
+WWW server. If the WWW server is being shut down, <tt>-1</tt> is returned
+instead.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpInit"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpInit()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+void HttpInit( void );</pre></td></tr>
+<tr valign=top><td>input</td><td align=center><i>none</i></td></tr>
+<tr valign=top><td>return</td><td align=center><i>none</i></td></tr>
+<tr><td colspan=3>Initializes the list of WWW server routines. Must be called
+at first in <a href="#API_modInit"><tt><i>modInit()</i></tt></a>.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpGetChar"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpGetChar()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpGetChar( <a href="#API_HttpConnection">PHttpConnection</a> pConn );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pConn</tt></td><td>data structure
+containing information about the incoming request</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>== 0..255</tt> : next character as ASCII / ANSI Latin-1 code
+<li><tt>==    256</tt> : end of data reached (EOF)
+<li><tt>==     -1</tt> : invalid parameter (NULL pointer)
+<li><tt>==     -2</tt> : time-out during reading
+<li><tt>==     -3</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>returns the next character within the HTTP request's body.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpGetHttpErrorText"></a><! ------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpGetHttpErrorText()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+unsigned char *HttpGetHttpErrorText( int iHttpRC );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>iRC</tt></td><td>HTTP return code, for
+which an error text should be returned</td></tr>
+<tr valign=top><td>return</td><td><tt>unsigned char *</tt></td><td><ul>
+<li><tt>== NULL</tt> : internal error
+<li><tt>!= NULL</tt> : pointer to error text message for this HTTP return code
+</ul></td></tr>
+<tr><td colspan=3>returns an error text for the given HTTP return code.
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.3.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpGetLine"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpGetLine()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpGetLine( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+                 unsigned char *pszBuffer,
+                 int cbBuffer );</pre></td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>pszBuffer</tt></td><td>buffer, where to write the data
+to</td></tr>
+<tr valign=top><td><tt>cbBuffer</tt></td><td>max. number of bytes within
+<tt><i>pszBuffer</i></tt></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=  0</tt> : number of bytes read
+<li><tt>== -1</tt> : invalid parameter (NULL pointer)
+<li><tt>== -2</tt> : time-out during reading
+<li><tt>== -3</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>reads the next sequence of characters within the HTTP
+request's body as if it were a line, i.e. up to the occurrence of a LF, CR or
+CR+LF (\n = 0x10, \r = 0x13, \r\n = 0x13, 0x10) sequence. The sequence is also
+copied to the buffer, that then is zero (\0 = 0x00 = NUL) terminated.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpGetPathToBin"></a><! ---------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpGetPathToBin()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpGetPathToBin( unsigned char *pszPath,
+                      int cbPath );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pszPath</tt></td><td>pointer
+to string variable, that shall obtain the path</td></tr>
+<tr valign=top><td><tt>cbPath</tt></td><td>max. number of bytes within
+<tt><i>pszPath</i></tt></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : okay
+<li><tt>== -1</tt> : invalid parameter (NULL pointer)
+<li><tt>== -2</tt> : could not get path
+</ul></td></tr>
+<tr><td colspan=3>returns the directory, where the WWW server binary is
+located. Modules may use this API call in order to put their own configuration
+and data files in this central directory.
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.3.
+</table></div></p>
+
+<p><a name="API_HttpGetServerInternalData"></a><! ------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpGetServerInternalData()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+<a href="#API_HttpServer">PHttpServer</a> HttpGetServerInternalData( void );</pre></td></tr>
+<tr valign=top><td>input</td><td align=center><i>none</i></td></tr>
+<tr valign=top><td>return</td><td><tt>PHttpServer</tt></td><td><ul>
+<li><tt>!= NULL</tt> : okay, pointer to internal <tt><i>HttpServer<i></tt> structure
+<li><tt>== NULL</tt> : no access to internal data is possible
+</ul></td></tr>
+<tr><td colspan=3>returns a pointer to the internal
+<tt><a href="#API_HttpServer">HttpServer</a></tt> structure.
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.6.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpLog"></a><! ------------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpLog()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpLog( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+             ... );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>...</tt></td><td><i>string with format data and
+additional parameters, like <tt>printf()</tt></i></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=  0</tt> : number of bytes written
+<li><tt>== -1</tt> : invalid parameter (NULL pointer)
+<li><tt>== -2</tt> : error during writing
+</ul></td></tr>
+<tr><td colspan=3>writes out the string to the logging facility.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpParseQueryStr"></a><! --------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpParseQueryStr()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpParseQueryStr( unsigned char **ppszQueryStr,
+                       unsigned char *pszBuffer,
+                       unsigned long  cbBuffer );</pre></td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>ppszQueryStr</tt></td><td>pointer
+to pointer with query string</td></tr>
+<tr valign=top><td><tt>pszBuffer</tt></td><td>buffer where to write parsed data</td></tr>
+<tr valign=top><td><tt>cbBuffer</tt></td><td>max. buffer length in bytes</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt> &gt; cbBuffer</tt> : data parsed partially, but buffer overload
+<li><tt>== cbBuffer</tt> : data parsed successfully, buffer full
+<li><tt> &gt;  0</tt> : data parsed, number of bytes read
+<li><tt>==  0</tt> : end of data reached, no more data
+<li><tt>== -1</tt> : invalid parameter (NULL pointer)
+<li><tt>== -2</tt> : input data contains invalid data (binary stuff)
+<li><tt>== -3</tt> : parsing error
+</ul></td></tr>
+<tr><td colspan=3>parses a given query string and move
+<tt><i>ppszQueryStr</i></tt> to the next part of the query string to be parsed,
+so that sub-sequent calls to this routine parse the entire query string. The
+data in the query string is translated while parsed. See these notes:<ol>
+<li>valid characters are ANSI 0x20 .. 0xFF (ISO 8859-1, Latin-1)
+<li>'<tt>&amp;</tt>' is used as divider between data blocks, the functions
+returns at such a character. Sub-sequent calls may be used, to parse the hole
+input data - the end is marked by a return value of 0 (zero).
+<li>'<tt>%XX</tt>' is treated as hexadecimal expression for a character - all
+codes %05 (\t), %0A (\n), %0D (\r), between %20 and %FF are valid. All others
+are invalid and lead to error code -2 (binary data).
+<li>'<tt>+</tt>' is treated as replacement character for '<tt> </tt>' (space,
+0x20).
+<li>It is recomended to decode the following symbols by the hexedecimal
+expression (see above two points):
+<div align=center><table border=1>
+<tr><td>'<tt> </tt>' --&gt; '<tt>+</tt>'</td>
+    <td>'<tt>%</tt>' --&gt; '<tt>%25</tt>'</td></tr>
+<tr><td>'<tt>&amp;</tt>' --&gt; '<tt>%26</tt>'</td>
+    <td>'<tt>+</tt>' --&gt; '<tt>%2B</tt>'</td></tr>
+<tr><td>'<tt>/</tt>' --&gt; '<tt>%2F</td>'</tr>
+</table></div>
+<li>Parsing is done until a '<tt>&amp;</tt>' is reached (see above), the end
+of the input data is reached, or no more space is left in the output buffer
+(which will result in a return == cbBuffer + 1, if parsing had to be aborted).
+<li>The pointer for reading is moved to behind '<tt>&amp;</tt>' (see above),
+is left on the teminating character '<tt>\0</tt>' or on the character, on
+which the the error occurred.
+</ol></td></tr>
+</table></div></p>
+
+<p><a name="API_HttpParseURL"></a><! -------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpParseURL()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpParseURL( unsigned char *pszURL,
+                  <a href="#API_HttpProtocol">PHttpProtocol</a>  pfProtocol,
+                  unsigned char *pszHost,
+                  unsigned long  cbHost,
+                  unsigned int  *piPort,
+                  unsigned char *pszPath,
+                  unsigned long cbPath );</pre></td></tr>
+<tr valign=top><td rowspan=7>input</td>
+<td><tt>pszURL</tt></td><td>URL to be parsed</td></tr>
+<tr><td><tt>pfProtocol</tt></td><td> where to store the protocol info</td></tr>
+<tr><td><tt>pszHost</tt></td><td>where to store the remote host</td></tr>
+<tr><td><tt>cbHost</tt></td><td>max. length for remote host info</td></tr>
+<tr><td><tt>piPort</tt></td><td>where to store the IP port number</td></tr>
+<tr><td><tt>pszPath</tt></td><td>where to store the other stuff</td></tr>
+<tr><td><tt>cbPath</tt></td><td>max. length for other stuff</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : okay, successfully parsed
+<li><tt>== -1</tt> : parameter error
+</ul></td></tr>
+<tr><td colspan=3>parses the given URL <tt><i>pszURL</i></tt> of the form
+<tt><i>&lt;protocol&gt;</i>://<i>&lt;host&gt;</i>:<i>&lt;port&gt;</i>/<i>&lt;path&gt;</i></tt>
+and returns information about the protocol, host, used TCP/IP port and path
+(which includes all other stuff, too). Parameters not found will not be set,
+i.e. if no protocol is specified, the variable referenced by
+<tt><i>pfProtocol</i></tt> remains unchanged! So if <u>default values</u> have
+to be set, they have <u>to be set prior calling</u> <tt>HttpParseURL()</tt>.
+That also means, that you may use this call subsequently - lets say you first
+parse <tt><i>http://www.test.net/path/abc</i></tt> and afterwards you parse
+<tt><i>https:def</i></tt>, you will receive as host <tt><i>www.test.net</i></tt>
+and as path <tt><i>/path/def</i></tt> (if there is no absolute path given in
+the URL, the routine adds the relative path to the end of the old path setting).
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.2.
+<br> - all parameters except <tt><i>pszURL</i></tt> may be set <tt><u>NULL</u></tt>
+<br> - special characters (space, <tt>\n</tt>, <tt>\r</tt>, <tt>\t</tt>) are
+stripped from the path in <tt><i>pszURL</i></tt> before it is copied to
+<tt><i>pszPath</i></tt>
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpPrintf"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpPrintf()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpPrintf( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+                ... );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>...</tt></td><td><i>string with format data and
+additional parameters, like <tt>printf()</tt></i></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=  0</tt> : number of bytes written
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>write data to the remote system in a free
+<tt><i>printf()</i></tt>-style. <b><u>Note:</u></b> Temporary storage is used
+in <tt><i><a href="#API_HttpConnection">HttpConnection</a>.szTemp</i></tt>.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpPuts"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpPuts()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpPuts( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+              unsigned char *pszText );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>pszText</tt></td><td>text to be written</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=  0</tt> : number of bytes written
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>writes the given string to the remote system and adds a
+<tt>\r\n</tt> (0x0D, 0x0A = CRLF) sequence to the end of it. <b><u>Note:</u></b>
+No temporary data is used.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpRead"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpRead()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpRead( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+              unsigned char *pszBuffer,
+              int cbBuffer );</pre></td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>pszBuffer</tt></td><td>buffer where to write the data</td></tr>
+<tr valign=top><td><tt>cbBuffer</tt></td><td>number of bytes to be read</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=   0</tt> : number of bytes read
+<li><tt>==  -1</tt> : parameter error (NULL pointer)
+<li><tt>==  -2</tt> : read time-out
+<li><tt>==  -3</tt> : communication error
+<li><tt>== -99</tt> : end of data, no more data
+</ul></td></tr>
+<tr><td colspan=3>reads the given number of bytes into the buffer.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpRedirect"></a><! -------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpRedirect()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpRead( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+              unsigned char *pszURL );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>pszURL</tt></td><td>new URL where browser shall
+request instead of the current one</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==   0</tt> : okay
+<li><tt>==  -1</tt> : parameter error (NULL pointer)
+<li><tt>==  -2</tt> : error during sending
+</ul></td></tr>
+<tr><td colspan=3>sends a HTTP response header with a suitable HTML page
+that redirects the browser request to the given URL.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpScheduleAt"></a><! ------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpScheduleAt()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpScheduleAt( <a href="#API_HttpSrvLaunch">PHttpSrvLaunch</a> pEntry );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pEntry</tt></td><td>data structure
+describing when and what to launch</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : okay, entry has been added to scheduling list
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : invalid date or interval
+<li><tt>== -3</tt> : scheduler not started yet, retry later
+<li><tt>== -4</tt> : can't add to scheduler list, list is full
+</ul></td></tr>
+<tr><td colspan=3>adds an entry to the schedulers list, which is processed
+every minute. The list is cleared on each system start or reconfiguration run.
+So each and every procedure, that shall be scheduled, has to be added to the
+scheduler's list at execution of
+<a href="#API_modInit"><tt><i>modInit()</i></tt></a>.
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.3.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpSendHeader"></a><! ------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpSendHeader()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpSendHeader( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+                    int fStatus );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>fStatus</tt></td><td>HTTP response status, a value of
+<tt>0</tt> (zero) is re-mapped to
+<a href="#API_Definitions"><tt><i>HTTP_RC_OK</i></tt></a></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : HTTP response header sent
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>first sends the initial line of the HTTP response header,
+using the response code <tt><i>fStatus</i></tt>. If the channel should be
+kept open (see
+<tt><i><a href="#API_HttpConnection">HttpConnection</a>.fReqInfo</i></tt>
+and <tt><i><a href="#API_Definitions">HTTP_REQ_REUSE_CHANNEL</a></i></tt>),
+a <tt><i>Keep-Alive:</i></tt>-line is generated. Then the HTTP response header
+lines described in the two-way linked list
+<tt><i><a href="#API_HttpConnection">HttpConnection</a>.pHttpRespHdr</i></tt>
+are written. If no such list is given a default
+<tt><i>Content-type: text/html</i></tt> line is written.</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpSockInit"></a><! -------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpSockInit()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpSockInit( void );</pre></td></tr>
+<tr valign=top><td>input</td><td colspan=2>-</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : IP stack initialization completed
+<li><tt>== -1</tt> : IP stack initialization error
+</ul></td></tr>
+<tr><td colspan=3>Initialization of the IP stack on Microsoft Windows
+systems (Win95, Win98, WinNT, Win2000).
+<br><b><u>Notes:</u></b>
+<br> - was first introduced in shttpd V 0.3.
+<br> - <b>is used internally</b> - it is not necessary to call this function
+directly, because it is called automatically by the WWW server and the
+wrapper TCP/IP calls (see include file <tt>os.h</tt>).
+</table></div></p>
+
+<p><a name="API_HttpSystem"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpSystem()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpSystem( int fEnv,
+                unsigned char *pszCmdLine );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>fEnv</tt></td><td><ul>
+<li><tt>== 0</tt> : do not build environment, use standard environment
+<li><tt>== 1</tt> : build environment
+</ul></td></tr>
+<tr valign=top><td><tt>pszCmdLine</tt></td><td>command line to be executed</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : command executed
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : execution error
+</ul></td></tr>
+<tr><td colspan=3>executes the given command from command line - in-/output
+is <u>not redirected</u>!!!</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpUngetChar"></a><! ------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpUngetChar()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpUngetChar( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+                   unsigned char cChar );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>cChar</tt></td><td>character to be un-getted</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : character put on top of input buffer
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : can't put character on top of input buffer
+</ul></td></tr>
+<tr><td colspan=3>deposits the given character on top of the input buffer, so
+that a following <a href="#API_HttpGetChar"><tt><i>HttpGetChar()</i></tt></a>,
+<a href="#API_HttpGetLine"><tt><i>HttpGetLine()</i></tt></a> or
+<a href="#API_HttpRead"><tt><i>HttpRead()</i></tt></a> command gets it first.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_HttpWrite"></a><! ----------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+HttpWrite()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int HttpWrite( <a href="#API_HttpConnection">PHttpConnection</a> pConn,
+               unsigned char *pszBuffer,
+               int cbBuffer );</pre></td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>pConn</tt></td><td>data
+structure containing information about the incoming request</td></tr>
+<tr valign=top><td><tt>pszBuffer</tt></td><td>buffer with data</td></tr>
+<tr valign=top><td><tt>cbBuffer</tt></td><td>number of bytes to be written</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>&gt;=  0</tt> : number of bytes written
+<li><tt>== -1</tt> : parameter error (NULL pointer)
+<li><tt>== -2</tt> : write time-out
+<li><tt>== -3</tt> : communication error
+</ul></td></tr>
+<tr><td colspan=3>writes the number of given bytes directly to the remote
+system.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListAdd"></a><! ------------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListAdd()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListAdd( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList,
+             unsigned char *pszText );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pList</tt></td><td>pointer to
+pointer to two-way linked list</td></tr>
+<tr valign=top><td><tt>pszText</tt></td><td>text to be added to the list</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : line added to end of list
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+<li><tt>== -2</tt> : memory allocation error (not enough memory)
+</ul></td></tr>
+<tr><td colspan=3>adds the given line to the end of the list. The string given
+is duplicated via <tt><i>strdup()</i></tt>.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListClear"></a><! ----------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListClear()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListClear( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pList</tt></td><td>pointer to pointer to
+two-way linked list</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : list successfully deleted
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+</ul></td></tr>
+<tr><td colspan=3>removes all entries from the list and frees all associated
+memory.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListDelete"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListDelete()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListDelete( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList,
+                unsigned char *pszSearchText );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pList</tt></td><td>pointer to
+pointer to two-way linked list</td></tr>
+<tr valign=top><td><tt>pszSearchText</tt></td><td>text to be searched for
+(at line start)</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : element removed from list, memory freed
+<li><tt>== -1</tt> : line not found
+<li><tt>== -2</tt> : error during deletion
+</ul></td></tr>
+<tr><td colspan=3>searches for a line starting with the given text and deletes
+it. Memory associated with the element is freed.
+<br><b><u>Note:</u></b> Search is case-insensitive.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListFind"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListFind()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+char * ListFind( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList,
+                 unsigned char *pszSearchText );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>pList</tt></td><td>pointer to
+pointer to two-way linked list</td></tr>
+<tr valign=top><td><tt>pszSearchText</tt></td><td>text to be searched for
+(at line start)</td></tr>
+<tr valign=top><td>return</td><td><tt>char *</tt></td><td><ul>
+<li><tt>== NULL</tt> : no data available or no list
+<li><tt>!= NULL</tt> : data of element found
+</ul></td></tr>
+<tr><td colspan=3>searches for an element, which has a line starting with the
+same text as described by the search text. If found, a pointer to the data of
+the element is returned and the element is selected.
+<br><b><u>Note:</u></b> Search is case-insensitive.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListGet"></a><! ------------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListGet()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+char * ListGet( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pList</tt></td><td>pointer to pointer to
+two-way linked list</td></tr>
+<tr valign=top><td>return</td><td><tt>char *</tt></td><td><ul>
+<li><tt>== NULL</tt> : no data available or no list
+<li><tt>!= NULL</tt> : data of currently selected element
+</ul></td></tr>
+<tr><td colspan=3>
+</td></tr>
+</table></div></p>
+
+<p><a name="API_ListNext"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListNext()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListNext( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pList</tt></td><td>pointer to pointer to
+two-way linked list</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : next element selected
+<li><tt>==  1</tt> : no list or end of list reached
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+</ul></td></tr>
+<tr><td colspan=3>select next element in the list.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListPrev"></a><! ------------------------------------ >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListPrev()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListPrev( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pList</tt></td><td>pointer to pointer to
+two-way linked list</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : previous element selected
+<li><tt>==  1</tt> : no list or top of list reached
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+</ul></td></tr>
+<tr><td colspan=3>select previous element in the list.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListReplace"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListReplace()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListReplace( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList,
+                 unsigned char *pszSearchText,
+                 unsigned char *pszReplaceText );</pre></td></tr>
+<tr valign=top><td rowspan=3>input</td><td><tt>pList</tt></td><td>pointer to
+pointer to two-way linked list</td></tr>
+<tr valign=top><td><tt>pszSearchText</tt></td><td>text to be searched for at
+each start of line within the list</td></tr>
+<tr valign=top><td><tt>pszReplaceText</tt></td><td>text to be placed in the
+line matching the search criteria</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : list successfully updated
+<li><tt>==  1</tt> : no replacement, replacement text was added to the end of
+the list
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+<li><tt>== -2</tt> : memory allocation error (not enough memory)
+</ul></td></tr>
+<tr><td colspan=3>replaces an existing line within the list with a new one. If
+the line searched for does not exist, the new text is added to the end of the
+list instead.</td></tr>
+</table></div></p>
+
+<p><a name="API_ListRewind"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+ListRewind()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int ListRewind( <a href="#API_PTwoWayLinkedList">PTwoWayLinkedList</a> *pList );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>pList</tt></td><td>pointer to pointer to
+two-way linked list</td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : list successfully rewinded
+<li><tt>==  1</tt> : no list existing (empty list)
+<li><tt>== -1</tt> : parameter error (invalid pointer)
+</ul></td></tr>
+<tr><td colspan=3>rewinds the given two-way linked list.</td></tr>
+</table></div></p>
+
+<p><a name="API_memShmAlloc"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+memShmAlloc()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+void * memShmAlloc( unsigned long cbMemSize );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>cbMemSize</tt></td><td>number of bytes to
+be allocated as shared memory</td></tr>
+<tr valign=top><td>return</td><td><tt>void *</tt></td><td><ul>
+<li><tt>!= NULL</tt> : pointer to shared memory block
+<li><tt>== NULL</tt> : could not allocate shared memory (error)
+</ul></td></tr>
+<tr><td colspan=3>creates a shared memory block with the given size. The
+returned pointer may be given to child processes (Unix: <tt><i>fork()</i></tt>)
+which then have access to the same data - updates in that block are visible to
+the parent!
+<br><b><u>Note:</u></b> Was first introduced in shttpd V 0.2.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_memShmFree"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+memShmFree()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int memShmFree( void **ppMemory,
+                unsigned long cbMemSize );</pre></td></tr>
+<tr valign=top><td rowspan=2>input</td><td><tt>ppMemory</tt></td><td>pointer
+to pointer to shared memory block</td></tr>
+<tr><td><tt>cbMemSize</tt></td><td>number of bytes to be de-allocated (size of
+shared memory block, as specified at
+<tt><i><a href="#API_memShmAlloc">memShmAlloc()</a></i></tt></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : okay, shared memory has been freed
+<li><tt>== -1</tt> : parameter error
+<li><tt>== -2</tt> : shared memory is already freed
+</ul></td></tr>
+<tr><td colspan=3>frees the shared memory block - the associated pointer will
+be reset to <tt><u>NULL</u></tt>. Shared memory always should be allocated and
+freed by the master process or thread, i.e. in the module initializer and
+destructor routine, but nether in the module's handler routine!
+<br><b><u>Note:</u></b> Was first introduced in shttpd V 0.2.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_memSrvAlloc"></a><! --------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+memSrvAlloc()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+void * memSrvAlloc( unsigned long cbMemSize );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>cbMemSize</tt></td><td>number of bytes to
+be allocated as server allocated memory</td></tr>
+<tr valign=top><td>return</td><td><tt>void *</tt></td><td><ul>
+<li><tt>!= NULL</tt> : pointer to server allocated memory block
+<li><tt>== NULL</tt> : could not allocate memory (error)
+</ul></td></tr>
+<tr><td colspan=3>creates a server allocated memory block. This is memory
+occupied by the WWW server and therefor is not vulnerable to unloads of
+modules. If a memory block is already allocated, the pointer to this memory
+is returned instead of allocating a new block. For identification of the
+memory blocks, the definition of this command gets the file name and line
+number in the source code.
+<br><b><u>Note:</u></b> Was first introduced in shttpd V 0.5.
+</td></tr>
+</table></div></p>
+
+<p><a name="API_memSrvFree"></a><! ---------------------------------- >
+<div align=center><table border=0 width="90%">
+<tr><td bgcolor="silver" colspan=3><font size=+1><tt>
+memSrvFree()</tt></font></td></tr>
+<tr><td bgcolor="white" colspan=3><pre>
+int memSrvFree( void **ppMemory );</pre></td></tr>
+<tr valign=top><td>input</td><td><tt>ppMemory</tt></td><td>pointer
+to pointer to server allocated memory block, which was returned by
+<tt><i><a href="#API_memSrvAlloc">memSrvAlloc()</a></i></tt></td></tr>
+<tr valign=top><td>return</td><td><tt>int</tt></td><td><ul>
+<li><tt>==  0</tt> : okay, server allocated memory has been freed
+<li><tt>== -1</tt> : parameter error
+<li><tt>== -2</tt> : server allocated memory is already freed
+</ul></td></tr>
+<tr><td colspan=3>frees the server allocated memory block - the associated
+pointer will be reset to <tt><u>NULL</u></tt>. Server allocated memory always
+should be allocated and freed by the master process or thread, i.e. in the
+module initializer and destructor routine, but nether in the module's handler
+routine!
+<br><b><u>Note:</u></b> Was first introduced in shttpd V 0.5.
+</td></tr>
+</table></div></p>
+
+<a name="writing"></a>
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><a href="#top"><img align=right border=0 width=20 height=20
+src="/gif/up.gif" alt="top"></a>Writing a loadable module</td></tr>
+</table>
+
+<p>
+A lots of things could be told. But it's much easier, to study the example
+<a href="/samples/mod_test.c"><tt>MOD_test</tt></a>, a test / sample module
+(source code). You may also have a look at the sample module's
+<a href="/test">output page</a>.
+</p>
+<p>
+There are some things to mention:<ul>
+<li>Routines marked as <i>optional</i> may be implemented or not. If they
+occur, they should return a valid return code (see valid return codes,
+described above). No implementation means: There is absolutely <u>no</u>
+routine - it is omitted.
+<li>Server API rutines, which are marked within this HTML page as <i>first
+introduced in ...</i> or marked by version number in <tt>include/http.h</tt>,
+should never be used in modules, which shall run in an earlier version of this
+WWW server! Crashes may occur, else.
+<li>For keeping the portability of the system, operating or platform dependent
+programming should be avoided - you may use the macros defined in
+<tt><i>include/os.h</i></tt> instead. If such programming cannot be avoided,
+the sections should be marked by <tt><i>#ifdef OS2</i></tt>,
+<tt><i>#ifdef WIN32</i></tt> or <tt><i>#ifdef UNIX</i></tt> and the
+corresponding <tt><i>#endif</i></tt> C pre-processors commands. The definitions
+of <tt><i>OS2</i></tt>, <tt><i>WIN32</i></tt> or <tt><i>UNIX</i></tt> is done
+in the <tt><i>include/os.h</i></tt> C header file.
+</ul>
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="new.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="config.htm"><img align=right border=0 src="/gif/left.gif" width=20
+height=20 alt="&lt;&lt;"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

@@ -1,0 +1,184 @@
+<html><head>
+<title>SimpleHTTPd - Installation</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?install">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/server.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Installation of the SimpleHTTPd
+</font></td></tr>
+</table>
+
+<p>
+Congratulation! If you can read this text by browsing it through the shttpd
+WWW server, half the way is done. One problem on installing a WWW server is
+the creation of a first configuration. This <i>first configuration</i> is
+already up and running.
+</p>
+
+<p>
+<b><u>Note:</u></b><br>
+It is absolutely necessary to change some of the initial parameters, in order
+to prevent easy hacking from outside! The most import parameters are those
+users (and passwords), who shall have administration privilege. The WWW server
+is programmed to ask for a first user name and password for a WWW
+administrator, when the administration tool is called the first time. Remember
+this user and password settings, because you need it for further
+administration! The best is, to enter the administration section now (by
+clicking the icon below), set a user name and password and return then to
+the home page and this section.
+</p>
+
+<table noborder width="100%">
+<tr><td align=center>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a>
+</td><td valign=center>
+Administration of the WWW server
+</td></tr>
+</table>
+
+<a name="planning"></a>
+
+<p>
+When <u>planning a WWW system</u> you should think about various things. The
+most awful for users is to wait for information. Therefor the most important
+point is <b>system power</b>. Depending on the number of users, the amount of
+data to be accessible and the response time, the server has to work a lot.
+Your <b><u>first step</u></b> should be the <u>setup of the hardware</u>.
+Don't try to save money by using cheap hardware! For small tasks and personal
+testing, an old Intel 486 system with EIDE hard disks may fit your needs. For
+massive access, a multi-processor system with Intel Pentium Pro or II or Sun
+Ultra Sparc Enterprise server with SCSI RAID hard disk subsystems. And don't
+forget to dimension the interface right! The interface to the local-area
+network or internet should not become a bottle-neck. As you might know,
+Internet currently doubles its size each 6 months. So be aware of growing
+access rates!
+</p>
+
+<p>
+This WWW server is currently only for <u>small WWW systems</u>. I'm sorry to
+say that I can't test and optimize it for middle or large systems. You may try
+it on your own risk. But I think, the server is good for first steps towards
+WWW and small/home office use.
+</p>
+
+<p>
+The <b><u>next step</u></b> is the <u>installation of the WWW server</u> and
+the <u>setup of the directories</u>. The WWW server and its modules should be
+put in one directory. This directory contains the <i>WWW server configuration
+file</i>, too. On a system with access restrictions (IBM OS/2 with HPFS386
+(LAN Server), Microsoft Windows NT or Unix-like OS), you should restrict
+access to this directory to the user, the WWW server is running under. It is
+recommended to <i>create a new user for running the WWW server</i>. This user
+has as less access rights as possible - so if one can hack your WWW server,
+he isn't able to manipulate other data! Another directory may be created for
+<i>CGI scripts</i> (<i>CGI</i> = Common Gateway Interface, scripts, called by
+the WWW server for creation of dynamic HTML pages), if needed. Further, you
+should prepare one or more directories (which may contain sub-directories) for
+HTML page files and images (GIFs). These directories shall be accessible for
+the WWW server for reading, but should not be for writing (hack prevention).
+Limit access to such directories and the directory for CGIs to only a small
+number of persons, who shall administrate those things (annotation: The
+persons administrating CGI scripts should be selected from trusty persons,
+since you can do anything within CGIs, especially on systems with no or low
+access restrictions!).
+</p>
+
+<a name="mapping"></a>
+
+<p>
+The directories for CGIs and HTML page files are mapped in the <i>WWW server's
+configuration</i>. If you have a URL (Uniform Ressource Locator) like
+<tt>http://www.mysystem.nul/doc/hello.htm</tt>, that means<ul>
+<li>contact a WWW server by <tt>http</tt> (HyperText Transfer Protocol)
+<li>located on a system <tt>www.mysystem.nul</tt>
+<li>and search under the virtual path <tt>/doc/</tt>
+<li>for a file <tt>hello.htm</tt>.
+</ul>
+The server itself may contain a mapping like (various samples)<pre>
+        /doc/   --&gt;   /usr/local/www/pages/   (Unix-like)
+        /doc/   --&gt;   e:\www\pages\           (OS/2, Win95/98/NT/2000 - local)
+        /doc/   --&gt;   \\server2\www\pages\    (OS/2, Win95/98/NT/2000 - UNC)
+</pre>
+the file <tt>hello.htm</tt> will be search in the proper directory. I.e. the
+virtual path <tt>/doc/</tt> is mapped to a path in the local or remote file
+system.
+</p>
+
+<p>
+If you want to use several directories for HTML page files, you have to set
+up for each directory such a mapping, where the virtual path should be unique
+to <b>one</b> directory. Be aware of the order in which mapping entries exist.
+The first matching mapping will be used for translation of the virtual into
+the local/remote file system path.
+</p>
+
+<p>
+When first running this WWW server, a default configuration is used, where the
+mapping is as follows:
+</p>
+<table border=1 width="100%">
+<tr><th>What?</th><th>Virtual Path</th><th>Local Path</th></tr>
+<tr><td>WWW server executable, modules, configuration</td>
+<td align=center>-</td><td><tt>shttpd/bin/<br>shttpd\bin\</tt></td></tr>
+<tr><td>CGI scripts</td>
+<td><tt>/bin/</tt></td><td><tt>shttpd/bin/cgi_bin/
+<br>shttpd\bin\cgi_bin\</tt></td></tr>
+<tr><td>Images (GIFs)</td>
+<td><tt>/gif/</tt></td><td><tt>shttpd/doc/<br>shttpd\doc\</tt></td></tr>
+<tr><td>HTML page files</td>
+<td><tt>/</tt></td><td><tt>shttpd/doc/<br>shttpd\doc\</tt></td></tr>
+</table>
+<p>
+<font size=-2><b><u>Note:</u></b><br>
+Mapping URLs to modules follows other rules, so there is a dash on the cell
+above. (Modules are directly mapped to a certain URL, not only to a path.)
+</font>
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="config.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="intro.htm"><img align=right border=0 src="/gif/left.gif" width=20
+height=20 alt="&lt;&lt;"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

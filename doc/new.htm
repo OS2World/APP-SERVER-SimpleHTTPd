@@ -1,0 +1,173 @@
+<html><head>
+<title>SimpleHTTPd - New Features</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?new">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/new.gif" width=40 height=40 alt="New Features">
+</td><td valign=center><font size=+2>
+New Features and other Changes
+</font></td></tr>
+</table>
+
+<p>
+This is a description of changes and new features introducted in a version of
+shttpd. If a feature is limited to a certain platform, <b>OS/2</b> stands for
+<i>IBM OS/2 Warp 3 or 4 (Server)</i>, <b>Win32</b> for <i>Microsoft Windows 95,
+98, NT, Windows 2000</i> and <b>Unix</b> for <i>Unix-style operating
+systems</i>.
+</p>
+
+<a name="ver_0.06"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.06</font></td></tr></table>
+<ul>
+<li>on-the-fly compression on data transfer (if browser supports).
+<li>introduction of data encryption via SSL (secure socket layer).
+<li>default ports changed to:<ul>
+<li>IBM OS/2 &amp; MS Windows 32: <b>80</b> (non SSL), <b>443</b> (SSL)
+<li>Unix: <b>8000</b> (non SSL), <b>8443</b> (SSL)
+<li>new API functions:
+<a href="sources.htm#API_HttpGetServerInternalData"><tt>HttpGetServerInternalData()</tt></a>.
+</ul>
+<li>copyright policy changed
+</ul>
+
+<a name="ver_0.05"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.05</font></td></tr></table>
+<ul>
+<li>bug fixed in <a href="sources.htm#API_HttpRead"><tt>HttpRead()</tt></a>,
+when there was more data on the stream than bytes were available in the
+receiption buffer, a write over the boundary, causing SIGSEGV occurred.
+<li>directory for CGI scripts was moved to a sub-directory below the WWW
+server executable and modules directory in order to prevent hacking and
+naming conflicts.
+<li>new API functions:
+<a href="sources.htm#API_HttpCheckConns">HttpCheckConns()</tt></a>,
+<a href="sources.htm#API_memSrvAlloc">memSrvAlloc()</tt></a>,
+<a href="sources.htm#API_memSrvFree">memSrvFree()</tt></a>.
+</ul>
+
+<a name="ver_0.04"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.04</font></td></tr></table>
+<ul>
+<li>More documentation on the basic modules
+<a href="modules/mod_cgi.htm"><tt>MOD_cgi</tt></a>,
+<a href="modules/mod_robo.htm"><tt>MOD_robo</tt></a>,
+<a href="modules/mod_stat.htm"><tt>MOD_stat</tt></a> and
+<a href="modules/mod_test.htm"><tt>MOD_test</tt></a>.
+<li><tt><u>MOD_cgi</u></tt>:<ul>
+<li>under OS/2, handling of CGI request has been changed, that stdin/stdout
+of WWW server is backuped only one time during initialization. The old version
+made copies of these handle per each access - that crashes when multiple
+requests took place at one time.
+<li>under Windows, the CGI handler has been re-written (the source code for
+IBM Visual Age C++ was taken also for the Microsoft Visual C++ compiler). Now,
+stdin/stdout no longer are re-directed on the WWW server, but only for the
+child process.
+</ul>
+</ul>
+
+<a name="ver_0.03"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.03</font></td></tr></table>
+<ul>
+<li>Introduction of National Language Support (NLS) and localized files.
+<li>Due to ugly bugs in most modern browsers, preventing the use of HTTP
+method <tt><i>POST</i></tt>, the HTTP method <tt><i>GET</i></tt> is now also
+supported for updating the WWW server configuration. Further, this method is
+set as default for administration.
+<li>Bugs in <tt>HttpRead()</tt> fixed. A module is now able to read as much
+data, as is available, when no content length is given.
+<li>Adaption of <tt>memShmAlloc()</tt> on Unix platforms - it does no longer
+make use of <tt><i>/dev/zero</i></tt>. Instead, a temporary file is created
+on <tt><i>/tmp/</i></tt> and made auto-removable (i.e. is dropped the same
+moment, the server shuts down or the shared memory is freed).
+<li>Introduction of
+<a href="sources.htm#API_HttpGetHttpErrorText"><tt>HttpGetHttpErrorText()</tt></a>,
+<a href="sources.htm#API_HttpGetPathToBin"><tt>HttpGetPathToBin()</tt></a>,
+<a href="sources.htm#API_HttpScheduleAt"><tt>HttpScheduleAt()</tt></a>,
+<a href="sources.htm#API_HttpSockInit"><tt>HttpSockInit()</tt></a>.
+</ul>
+
+<a name="ver_0.02"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.02</font></td></tr></table>
+<ul>
+<li>Configuration of modules completed - modules may now by configured within
+the administration area via browser.
+<li>Introduction of
+<a href="sources.htm#API_memShmAlloc"><tt>memShmAlloc()</tt></a> and
+<a href="sources.htm#API_memShmFree"><tt>memShmFree()</tt></a> for
+system-independent allocation and freeing of shared memory.
+</ul>
+
+<a name="ver_0.01"></a>
+<table bgcolor="silver" border=0 width="100%"><tr><td>
+<font size=+1>Version 0.01</font></td></tr></table>
+<ul>
+<li>First public release of shttpd.
+<li>Implementation of authorization, module interface, CGI via module
+<tt>MOD_cgi</tt>, remote configuration/administration.
+<li>Tested platforms: <ul>
+  <li>IBM OS/2 Warp 3 &amp; 4 with IBM Visual Age C++ 3.0
+  <li>Microsoft Windows 95B with IBM Visual Age C++ 3.5
+  <li>Microsoft Windows NT 4.0 with Microsoft Visual C++ 4.0
+  <li>Hewlett-Packard HP/UX 9.01 with GNU C-compiler gcc 2.8.1
+  <li>Hewlett-Packard HP/UX 10.20 with GNU C-compiler gcc 2.8.1
+  <li>Sun SunOS 4.1.4 with GNU C-compiler gcc 2.6.3
+  <li>Sun Solaris 2.5.1 / 2.6 with GNU C-compiler gcc 2.6.3 &amp; 2.7.2
+  </ul>
+<li>Support for <tt><i>Connection: Keep-Alive</i></tt> of Netscape's Browser
+to re-use already established connections added.
+</ul>
+
+<table bgcolor="silver" border=0 width="100%"><tr><td align=center>
+<font size=+1>-</font></td></tr></table>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="bugs.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="sources.htm"><img align=right border=0 src="/gif/left.gif" width=20
+height=20 alt="&lt;&lt;"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

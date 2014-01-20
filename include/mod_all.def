@@ -1,0 +1,14 @@
+;------------------------------------------------------------------------------
+; definition file for the SimpleHTTPd server modules
+;------------------------------------------------------------------------------
+LIBRARY
+CODE MOVEABLE DISCARDABLE
+DATA MOVEABLE SINGLE
+HEAPSIZE 32768
+EXPORTS
+        modAbort
+        modClear
+        modConfig
+        modHandler
+        modInit
+;------------------------------------------------------------------------------

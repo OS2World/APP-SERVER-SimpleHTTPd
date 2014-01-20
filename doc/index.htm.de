@@ -1,0 +1,106 @@
+<html><head>
+<title>Willkommen zu SimpleHTTPd!</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?index">
+
+<a name="program_index"></a>
+
+<h1>Willkommen zu SimpleHTTPd!</h1>
+
+<center><p><font size=-2>
+Dieses Dokument beschreibt den <u>SimpleHTTPd</u> WWW-Server, seine
+Konfiguration, Anwendung und Programmierung. Hier ist der Index, von dem
+aus Sie die verschiedenen Kapitel der Dokumentation ausw&auml;hlen
+k&ouml;nnen.
+</font></p></center>
+
+<h3>Table of Contents</h3>
+<p>
+<table noborder width="100%">
+<tr><td align=center><! --- Introduction ---------------------------- >
+<a href="intro.htm"><img src="/gif/curtain.gif" width=40 height=40
+alt="Introduction"></a></td><td valign=center>
+Einf&uuml;hrung in den <i>SimpleHTTPd</i>
+</td></tr>
+<tr><td align=center><! --- Installation ---------------------------- >
+<a href="install.htm"><img src="/gif/server.gif" width=40 height=40
+alt="Installation"></a></td><td valign=center>
+Installation der Software
+</td></tr>
+<tr><td align=center><! --- Configuration --------------------------- >
+<a href="config.htm"><img src="/gif/tools2.gif" width=40 height=40
+alt="Configuration"></a></td><td valign=center>
+Konfiguration des WWW-Servers, <a href="config.htm#admin_modules">Module</a>,
+<a href="config.htm#admin_localization">Sprachunterst&uuml;tzung</a>
+</td></tr>
+<tr><td align=center><! --- Source Code ----------------------------- >
+<a href="sources.htm"><img src="/gif/binary.gif" width=40 height=40
+alt="Source Code"></a></td><td valign=center>
+Source Code und Beispiele f&uuml;r die Modulprogrammierung
+</td></tr>
+<tr><td align=center><! --- New ------ ------------------------------ >
+<a href="new.htm"><img src="/gif/new.gif" width=40 height=40
+alt="New Features"></a></td><td valign=center>
+Neuigkeiten und &Auml;nderungen
+</td></tr>
+<tr><td align=center><! --- Known Bugs ------------------------------ >
+<a href="bugs.htm"><img src="/gif/roadkill.gif" width=40 height=40
+alt="Bugs & ToDo"></a></td><td valign=center>
+Liste der bekannten Programmfehler und f&uuml;r zuk&uuml;nftige Versionen
+geplante Erweiterungen
+</td></tr>
+<tr><td align=center><! --- Copyright Notes ------------------------- >
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td><td valign=center>
+Copyright Hinweise
+</td></tr>
+</table><! ---------------------------------------------------------- >
+</p>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a>
+</td></tr><tr><td align=center><font size=-3>
+Inhalts-<br>verzeichnis
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40
+alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a>
+</td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a>
+</td></tr><tr><td align=center><font size=-3>
+Copyright<br>Hinweise
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Send eMail -------------------- >
+<table><tr><td align=center valign=top>
+<a href="mailto:Dirk_Ohme@hotmail.com?subject=shttpd+question">
+<img src="/gif/mail.gif" width=40 height=40 alt="Send an eMail to the Author">
+</a></td></tr><tr><td align=center><font size=-3>
+eMail an<br>Programmautor
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy; 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

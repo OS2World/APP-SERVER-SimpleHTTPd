@@ -1,0 +1,328 @@
+<html><head>
+<title>SimpleHTTPd - Configuration</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?config">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/tools2.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Configuration of the SimpleHTTPd
+</font></td></tr>
+</table>
+
+<a name="configuration"></a>
+<a name="admin_account"></a>
+
+<p>
+The configuration can be done remote via browser. Per <i>default</i> the URI
+(<i>Uniform Ressource Identifier</i>) <tt>/admin</tt> is mapped to the WWW
+server's administration tool. The first time, you enter this section, you will
+be prompted for a user name and password for an <u>administrator account</u>.
+This is necessary to prevent hackers for cracking your (unprotected) system,
+when no administrator account is set.
+</p>
+
+<a name="admin_section"></a><! ---------------------------------------------- >
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><font size=+1>Administration section</font></td></tr>
+</table>
+
+<p>
+The <u>main menue</u> is separated in different blocks. These blocks are marked
+by colors for better optical fraction. These table background colors have no
+certain meaning.
+<table border=1 width="100%">
+<tr><th>Main Section</th><th>Sub-Section</th><th>Meaning</th></tr>
+<tr bgcolor="#8080FF"><td colspan=2 valign=top>Common Settings</td>
+<td>Common settings of the WWW server, like name of the WWW server (which may
+vary from the machine's name in the network), eMail address of the server's
+responible, etc.</td></tr>
+<tr><td bgcolor="#8080FF" valign=top>--&gt;</td><td bgcolor="#C0C0FF"
+valign=top>MIME Types</td>
+<td bgcolor="#C0C0FF">The MIME types allow the server to tell the client, which
+file contains what kind of data. For instance, to tell the client, that a file
+with extension <tt>*.gif</tt> is an image, there is a line within this section,
+mapping <tt>.gif</tt> to the MIME type <tt><i>image/gif</i></tt>, so the client
+knows how to handle such images.
+<br><b><u>Notes</u>:</b><ul>
+<li>The flag '<font color="gray"><tt><i>compression</i></tt></font>' specifies
+whether on-the-fly data compression makes sense for this type of data or not.
+Compression only takes place when compression is enabled on both access path and
+MIME type, and the client browser supports such feature!
+</ul></td></tr>
+<tr bgcolor="#FF8080"><td colspan=2 valign=top>Access Paths</td>
+<td>This is a translation list for incoming requests, which is are mapped to
+(a) a certain module, (b) to a certain path within the system. Since a request
+may result in static <b>or</b> dynamically generated data, there must be a
+distinguish between the processors of the request. Here, the processors are
+represented by internal and loadable modules. The requests can be distinguished
+by either path, extension or both. If path or extension is omitted, <i>all</i>
+requests match in that category. For some requests, it further necessary to
+translate the WWW notation to a local access path, e.g. a path in the file
+system. Requests may then be blocked or obeyed by a security scheme, that
+means, access is granted only by giving a user name &amp; password.
+<br><b><u>Notes</u>:</b><br>
+For translation of paths into the local file system, there are these special
+tokens:<ul>
+<li><font color="yellow"><tt>%bin%</tt></font> = is replaced by the path to
+the WWW servers executable, i.e. if the server runs in
+<tt>/usr/local/www/bin/</tt>, <tt><i>%bin%</i></tt> points to
+<tt>/usr/local/www/bin</tt>.
+<li><font color="yellow"><tt>%doc%</tt></font> = is replaced by the path to
+the WWW servers executable, striped by one directory. I.e. if the server runs
+in <tt>/usr/local/www/bin</tt>, <tt></i>%doc%</i></tt> points to
+<tt>/usr/local/www</tt>.
+<li>The flag '<font color="yellow"><tt><i>compression</i></tt></font>'
+specifies whether on-the-fly data compression shall be enabled or disabled.
+If enabled and the remote browser supports such feature, all data sent back
+is GZIP compressed (compression ration depends on type of data and may vary
+in between 1:2 ... 1:8). Be aware that there is another
+'<tt><i>compression</i></tt>' flag in the MIME type section!
+<li>The flag '<font color="yellow"><tt><i>req. SSL</i></tt></font>' specifies
+if an access path <u>must only</u> be available for SSL connections. If set,
+a non-SSL connection will result in HTTP response code <i>499</i>
+('<i>requires SSL</i>').
+</ul>
+<br><b><u>Explanation:</u></b><br>
+The button <font color="yellow"><tt>to end</tt></font> moves an entry to the
+end of the list. It may be used for sorting an entry to the right position
+in the list.
+</td></tr>
+<tr><td bgcolor="#FF8080" valign=top>--&gt;</td><td bgcolor="#FFC0C0"
+valign=top>Default Files, Index, ...</td>
+<td bgcolor="#FFC0C0">The so-called <i>default files</i> are the files which
+are searched when either no file name is given, or the specified file could not
+be located. (<b>note:</b> This is a behaviour different to other WWW servers.
+SimpleHTTPd first tries to find a default file before returning an error.)
+This list is processed top-down, like any list within the configuration.
+</td></tr>
+<tr bgcolor="#80FF80"><td colspan=2 valign=top>List of Modules</td>
+<td>This is a list of loadable modules - under Unix, so-called <tt>*.so</tt>
+or <tt>*.sl</tt> (HP/UX) files, under MS Windows 95/98/NT/2000/... and IBM OS/2
+<tt>*.dll</tt> files. Loadable modules are shared objects, shared libraries or
+dynamic link libraries (depending the platform). They are loaded at run-time,
+so there is no need to re-compile the WWW server when addin or removing a
+modules. There is a list of <b>internal modules</b> which are linked in the
+WWW server, which cannot be removed or modified. These modules do not appear
+in this <i>List of Modules</i>:<ul>
+<li><tt>ADMIN</tt> = administration module for online administration
+<li><tt>FILE</tt> = access to static data (HTML pages, images, ...)
+<li><tt>INFO</tt> = (<i>reserved for future use</i>)
+<li><tt>INSTALL</tt> = note for misconfigured system, is also used, when a path
+cannot be resolved by the access path list
+<li><tt>PATH</tt> = prefix and remapping - remaps an incoming request (URI) to
+another path (URI). This may be helpful for adding a security scheme to various
+other URIs without having the need to keep these entries twice (e.g.
+<tt>/int/bin/status</tt> and <tt>/bin/status</tt> shall result to one CGI call,
+but <tt><i>/int/</i></tt> shall be password protected. So you may <tt>PATH</tt>
+the incoming request <tt>/int/</tt> to <tt>/</tt>, which is password protected
+by a security scheme.
+</ul>
+Dynamical loaded modules have a name starting by <tt><i>MOD_...</i></tt>. Such
+modules are stopped and re-started after each and every change in
+configuration.</td></tr>
+<tr><td bgcolor="#80FF80" valign=top>--&gt;</td><td bgcolor="#C0FFC0"
+valign=top>Configuration of Module ...</td>
+<td bgcolor="#C0FFC0">(<i>reserved for future use - individual configuration of
+modules</i>)</td></tr>
+<tr bgcolor="#FFC080"><td colspan=2 valign=top>List of Authorization
+Schemes</td>
+<td>An authorization scheme is a list or group of users, that have access to
+a certain URI or path. Access paths may be mapped to these authorization
+groups. A user may be member of several authorization schemes, but it is wise
+to limit the number of occurrences and to set the schemes by rank levels
+(public groups, higher priviledged users, administrators, ...).</td></tr>
+<tr><td bgcolor="#FFC080" valign=top>--&gt;</td><td bgcolor="#FFFFC0"
+valign=top>Users of ...</td>
+<td bgcolor="#FFFFC0">List of users, which are within an authorization scheme
+(group). <b>Note:</b> Passwords are encrypted by a one-way encryption routine,
+so no passwords can be displayed nor cracked!
+</table>
+</p>
+
+<a name="config_file"></a><! ------------------------------------------------ >
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><font size=+1>Configuration File</font></td></tr>
+</table>
+
+<p>
+Per default, the configuration file is assumed to be named to
+<tt><i>httpd.cfg</i></tt>. If no <a href="#parameters">calling parameter</a>
+is given, this file is searched in the current directory. If a calling
+parameter is set, this configuration file is tried to be loaded. If either
+methods fail, a default configuration file <tt><i>httpd.cfg</i></tt> is
+searched in the directory, where the binary of the WWW server is located. If
+this search fails, default settings are taken and a <tt>httpd.cfg</tt> is
+created within the directory, where the WWW server (binary) is located.
+</p>
+
+<p>
+The configuration file is an ASCII file, which is separated in groups and
+settings. A group is marked by a line, starting at the left with a bracket:
+<pre>
+        [group name]
+</pre>
+Below the line, all entries not starting at the line start belong to that
+group. Settings are separated to <tt><i>setting name</i> <b>=</b> <i>setting
+value</i></tt>.
+</p>
+
+<a name="parameters"></a>
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><font size=+1>Calling Parameters</font></td></tr>
+</table>
+
+<p>
+For security reasons, some settings can only be done by calling parameters,
+i.e. parameters passed to the SimpleHTTPd at start-up via command line. The
+syntax of the SimpleHTTPd when calling by command line is: <pre>
+  (1)   shttpd -help
+  (2)   shttpd -register
+  (3)   shttpd -unregister
+  (4)   shttpd [-dump [FILE]] [-cfg FILE] [-port N]
+</pre><ol>
+<li><tt>-help</tt> = request online help, don't start server
+<li><tt>-register</tt> = register WWW server to system for automatic startup.
+E.g. under MS Windows NT, register to registry.
+<li><tt>-unregister</tt> = un-register WWW server from system, reverse to
+<tt><i>-register</i></tt>.
+<li><tt>-dump [<i>FILE</i>]</tt> = write all incoming and outgoing HTTP headers
+to the given file or - if not specified - to a file <tt>httpd.dmp</tt> in the
+WWW server's binary directory (for debugging purposes).
+<br><tt>-cfg FILE</tt> = use an alternative configuration file.
+<br><tt>-port N</tt> = use alternative TCP/IP port for WWW server. Default is
+port 8000.
+</ol>
+</p>
+
+<a name="admin_modules"></a><! ---------------------------------------------- >
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><font size=+1>List of Modules</font></td></tr>
+</table>
+
+<p>
+The distribution knows some modules. Some of them are for testing and
+demonstration, some are ready for use. Feel free to watch the administration
+section and the online documentation for to see, how to use the modules.
+</p>
+
+<p>
+<div align=center>
+<table border=1 width="90%">
+<tr><th>Module Name<th>Purpose</tr>
+<tr><td><tt><a href="modules/mod_cgi.htm">MOD_cgi</a></tt><td>Module for
+accessing CGI scripts.</td></tr>
+<tr><td><tt><a href="modules/mod_robo.htm">MOD_robo</a></tt><td>Search engine
+and robot for checking the web site.</td></tr>
+<tr><td><tt><a href="modules/mod_ssl.htm">MOD_ssl</a></tt><td>Data encryption
+on basis of secure socket layers (SSL). This module enables a second port on
+the WWW server for secure access.</td></tr>
+<tr><td><tt><a href="modules/mod_stat.htm">MOD_stat</a></tt><td>Statistics
+generation. The modules produces an empty, transparent GIF image and counts
+the hit on a certain entry. Entries are specified by (case-sensitive) names.
+There is a fix limit on names - if the limit is reached, the entry with the
+lowest hit rate is overwritten. The modules stores the statistics data in the
+WWW server's directory in an ASCII file. To mark a page for statistics on a
+name <tt><i>hit_me</i></tt>, you have to include a line <pre>
+        &lt;IMG SRC=&quot;/stat?<i>hit_me</i>&quot;&gt;
+</pre>
+within the HTML page (if the default access paths are set).</td></tr>
+<tr><td><tt><a href="modules/mod_test.htm">MOD_test</a></tt><td>Sample module
+for demonstration of how to program a module. See <a href="sources.htm">next
+section</a>.</td></tr>
+</table>
+</div>
+</p>
+
+<a name="admin_localization"></a><! ----------------------------------------- >
+<table bgcolor="silver" border=0 width="100%">
+<tr><td><font size=+1>Localization, National Language Support (NLS)</font></td>
+</tr></table>
+
+<p>
+The SimpleHTTPd knows a very basic support for national languages. Normally,
+a user may specify within his browser which languages he/she prefers to get
+documents in. The browser send this request list via the HTTP request in a line
+<tt><i>Accept-Language</i></tt>. For instance, the browser may send the line
+<pre>
+        Accept-Language: de, en, fr
+</pre> which means: If there is a german (<tt><i>de</i></tt>) version of the
+document with this URL, send it. If not, check then for an english
+(<tt><i>en</i></tt>) or a french (<tt><i>fr</i></tt>) version. The WWW server
+uses this information by adding the language/country code to the name of the
+file matching the URL. So if there is a file <tt>index.htm</tt> matching the
+URL <tt><i>http://somewhere.com/pub/index.htm</i></tt>, it is<ul>
+<li>first checked for a file <tt>index.htm.de</tt>,
+<li>then for a file <tt>index.htm.en</tt>,
+<li>first checked for a file <tt>index.htm.fr</tt>.
+<li>If none of the files could be found, <tt>index.htm</tt> is returned.
+</ul>
+<br><b><u>Note:</u></b><br>
+<tt>index.htm</tt> must be available! If the base HTML file does not exits,
+an error is returned to the caller. National Language Support (files in
+localized languages) is treated as an option, where the base file must exist.
+</p>
+
+<p>
+This support of NLS is only available on static HTML pages, i.e. HTML files.
+For modules and CGIs, the support has to be added by the programmer himself.
+The administration section and most parts of the online documentation will
+only be available in English.
+</p>
+
+<p>
+The country/language tags are used that way, they are added to the end of the
+corresponding base HTML file name plus a dot, i.e.<pre>
+        <i>&lt;base_HTML_file_name&gt;</i> + '.' + <i>&lt;country_code&gt;</i>
+</pre>
+The <i>country_code</i> is a copy of the code given by <tt>Accept-Language</tt>,
+but only ASCII codes '<tt>A .. Z</tt>' (which are converted to their lower-case
+counterparts), '<tt>a .. z</tt>', '<tt>0 .. 9</tt>' are copyied, '<tt>.</tt>'
+(dot) and '<tt>_</tt>' and '<tt>-</tt>' are converted to '<tt>-</tt>', all
+other characters are skipped.
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="sources.htm"><img align=right border=0 src="/gif/right.gif" width=20
+height=20 alt="&gt;&gt;"></a>
+<a href="install.htm"><img align=right border=0 src="/gif/left.gif" width=20
+height=20 alt="&lt;&lt;"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="a-z.htm"><img src="/gif/a-z.gif" width=40 height=40 alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>
