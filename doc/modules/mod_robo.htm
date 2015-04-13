@@ -1,0 +1,202 @@
+<html><head>
+<title>SimpleHTTPd - Module MOD_robo</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?config">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/tools2.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Configuration of the Module <tt>MOD_robo</tt>
+</font></td></tr>
+</table>
+
+<a name="configuration"></a>
+<a name="MOD_robo"></a>
+
+<p>
+This module implements a simple web robot, which scans certain URLs
+recursively up to a given number of pages. The time to start can be configured
+for periodical or one-time runs, the robot then runs in a separate task. The
+number of URLs to be checked depends on the license and is the number of
+parallel tasks the WWW server can handle divided by 4 and rounded to an
+integer. I.e. the public version can handle 10 parallel tasks, divided by 4
+is 2.5, rounded 2. So with a public version of shttpd you can specify two
+URLs to be checked.
+</p>
+
+<h2>Configuration</h2>
+
+<p>
+Configuration is done within the <a href="/admin">administration section</a>.
+The configuration panel shows each search URL with all of its settings:
+<div align=center><table bgcolor="silver" border=1 width="90%">
+<tr><td rowspan=2>No<td>Day/year<td bgcolor="white">0
+<td bgcolor="white"><tt>&lt;--</tt><td>time<td bgcolor="white">-1<td>:
+<td bgcolor="white">-1<td>max.<td bgcolor="white">100
+<td align=center bgcolor="yellow">unused
+<tr><td>URL:<td colspan=8 bgcolor="white">&nbsp;
+<td><table border=1><tr><td bgcolor="gray">change</td></tr></table>
+</table></div>
+</p>
+
+<p>
+On the left <tt><b>No</b></tt> specifies the URL number (ordinal number). The
+top line defines starting conditions and maximum number of pages to process.
+The number right of <tt><b>max.</b></tt> is the maximum number of pages and
+must be in rage of <i>1 .. 10000</i>. The starting conditions are:<ul>
+<li><tt><b>day of year</b></tt> in range of <i>0 .. 365</i> with <i>0</i> =
+January 1st,
+<li><u>alternatively</u> a periodically call on weekdays can be set with the
+selection (<tt><b>&lt;--</b></tt>). So you either can set a certain day of
+the year or a certain weekday - not both!
+<li>The time can be specified in hours:minutes with a 24 hour clock
+(<i>0:00 .. 23:59</i>). If hours or minutes are set to <tt><i>-1</i></tt> it
+means &quot;<i>does not care</i>&quot;. I.e. if you set time to
+<tt><i>-1:00</i></tt> it should be read as &quot;<i>repeat every full
+hour</i>&quot; (= minutes 0, hour does not care).
+</ul>
+</p>
+
+<p>
+The second line contains the URL to start with and which defines the range.
+The URL <u>must</u> be of the form<pre>
+        <i>protocol</i><b>://</b><i>host</i><b>:</b><i>port</i><b>/</b><i>path</i>
+  like
+        http://www.somewhere.org:80/
+</pre>
+(<i><b><u>Note:</u></b> When pressing the <tt>change</tt> button, a parsing
+of the URL is done and you are able to check/verify the setting.</i>)
+</p>
+
+<h2>Processing an URL</h2>
+
+<p>
+When the robot starts, a start-up message is produced by the scheduler (see
+<a href="/sources.htm#API_HttpScheduleAt"><tt>HttpScheduleAt()</tt></a>). The
+robot starts with the given URL and checks the related page for links. If a
+link matches the starting URL, then the robot follows the link, else it does
+not follow the link. No more data is further then requested, when the maximum
+number of links is reached for this URL.
+</p>
+
+<h2>Output</h2>
+
+<p>
+Currently, there is no link from the online documentation to the
+<a href="/search">main output page</a> of this module. In the default
+configuration the URI <a href="/search"><tt>/search</tt></a> is associated
+with that page. If a query string is given and the first parameter starts
+with <tt><i>what=...</i></tt>, one of the sub-pages is called.
+<dl>
+<dt><tt>?what=search&amp;where=<i>no</i>&amp;word=<i>word</i>...</tt>
+<dd>Search for a word <tt><i>word</i></tt> in one of the lists
+(<tt><i>no</i></tt> = 0 .. n) or all lists (<tt><i>no</i></tt> = -1). More
+than one word can be specified, by repeating <tt>word=<i>word</i></tt>
+parameters.
+<dt><tt>?what=missing&amp;where=<i>no</i></tt>
+<dd>Display all missing URLs of a list (<tt><i>no</i></tt> = 0 .. n) or all
+lists (<tt><i>no</i></tt> = -1). Missing URLs are those, where the WWW server
+returns a HTTP return code other than
+<a href="/sources.htm#API_Definitions"><tt>200</tt></a>.
+<dt><tt>?what=showWords&amp;&amp;where=<i>no</i></tt>
+<dd>Display all known words of a list (<tt><i>no</i></tt> = 0 .. n) or all
+lists (<tt><i>no</i></tt> = -1). The single words are hyperlinked with the
+search word page.
+</dl>
+</p>
+
+<h2>Output files</h2>
+
+<p>
+<u>After</u> completion of a scan of an URL, output files are written to the
+WWW server's binary directory. The file names associated with the robot are
+built in this scheme:<pre>
+        _robo_<i>&lt;no&gt;</i>.<i>&lt;ext&gt;</i>
+</pre><ul>
+<li><tt><i>&lt;no&gt;</i></tt> = index number of search entry
+<li><tt><i>&lt;ext&gt;</i></tt> = extension<ul>
+<li>= <tt>url</tt>: list of URLs
+<li>= <tt>wrd</tt>: word lists
+</ul>
+</ul>
+</p>
+
+<p>
+The <u>list of URLs</u> are ASCII files, where all processed URLs are stored,
+with the starting URL in the first line. The line data is stored
+space-separated:<ol>
+<li>current URL
+<li>'<tt>-</tt>' if HTTP return code is 200, else the URL from which the
+current URL is referenced
+<li>HTTP return code
+<li>size of URL contents in bytes
+<li>word index number
+<li>further word index numbers (repeating up to end of line)
+</ol>
+The line ends with a terminating space. If a line starts with a
+<tt><b>@</b></tt>, it is a control line with control information:<dl>
+<dt><tt>@Connections <i>&lt;total&gt;</i> <i>&lt;re-used&gt;</i></tt>
+<dd>Contains the number of URLs found (<tt><i>total</i></tt>) and the
+number of re-used connections (normally each HTTP request is handled by
+another connection. Modern servers can handle multiple HTTP request via
+one connection. The number of re-used connections compared to the total
+URL number is a unit of measurement of how good a system acts.).
+<dt><tt>@Duration <i>&lt;seconds&gt;</i></tt>
+Duration of robot processing in seconds.
+</dl>
+</p>
+
+<p>
+In order to save space, words are stored in <u>word list</u> and the URL list
+only contains index number, which show, what words are contained by a URL
+object. The file contains of an ASCII list with one word per line, followed by
+its index number and a terminating space. Lines staring with a
+<tt><b>@</b></tt> are control lines:<dl>
+<dt><tt>@Words &lt;<i>total</i>&gt;</tt>
+<dd>Total number of words in this list.
+</dl>
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="../config.htm#admin_modules"><img align=right border=0
+src="/gif/up.gif" width=20 height=20 alt="^"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="../index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="../a-z.htm"><img src="/gif/a-z.gif" width=40 height=40
+alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="../copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

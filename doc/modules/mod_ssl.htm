@@ -1,0 +1,115 @@
+<html><head>
+<title>SimpleHTTPd - Module MOD_ssl</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?config">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/tools2.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Configuration of the Module <tt>MOD_ssl</tt>
+</font></td></tr>
+</table>
+
+<a name="configuration"></a>
+<a name="MOD_ssl"></a>
+
+<p>
+The WWW server has base data encryption support built-in. There is a second
+port reserved for secure socket layer (SSL) connections. But the WWW server
+main part isn't able to handle data encryption - this has to be done by an
+external module. <tt>MOD_ssl</tt> contains initialization, encryption and
+decryption methods using OpenSSL (which was established on SSLeay by Eric
+Young - eay@cryptsoft.com).
+</p>
+<h2>Why this separation?</h2>
+<p>
+In some countries data encryption is prohibited by law, in others it is
+restricted. The USA for instance prohibits export of strong data encryption,
+France prohibits use of data encryption for private use same as Russia does.
+The module - as mentioned above - relies on an external library. If this
+library is missing the operating system isn't able to load the module. If
+encryption would be completely in the main program, in that case no operation
+would be possible at all. So, that way, only the module can't be loaded and
+access to the second port is blocked.
+<br>
+<b><u>Notes</u>:</b>
+<ul>
+<li>Because of copyright and law restrictions, the shared / dynamic link
+libraries of OpenSSL or SSLeay are <b>*not*</b> included within this package.
+You have to get them separately and install them in a place, so the operating
+system is able to load them.
+<li>For Unix or Windows you can take the original archive of OpenSSL (0.9.4
+or newer is recommended) from
+<a href="http://www.openssl.org">www.openssl.org</a>.
+<li>For OS/2 you can take the original archive and apply the package I made
+available at my home page
+<a href="http://come.to/Dirk_Ohme">come.to/Dirk_Ohme</a>.
+<li>For use of data encryption further there is the need of a server
+certificate. It describes the remote system (i.e. the browser) who's on the
+other side. Normally, you require a certificate which was made by an official
+authorization site. But this costs real money ... within OpenSSL you're able
+to create your own cerificates. For testing a simple non-official certificate
+is included in this distribution of shttpd. You're not allowed to use this
+test certificate in public!
+</ul>
+</p>
+
+<h2>Configuration?</h2>
+
+<p>
+Configuration is done via <a href="/admin">configuration section</a> - see
+module configuration for module <tt>MOD_ssl</tt>. The configuration parameters
+are currently limited to <u>PEM file path and name</u>. The <i>PEM file</i>
+contains the server certificate. On the initial start-up, the test certificate
+is set.
+<br>
+<b><u>Note</u>:</b>
+<ul>
+<li>You may use the definition &quot;<tt>%bin%</tt>&quot; for specification
+of the shttpd's bin directory.
+</ul>
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="../config.htm#admin_modules"><img align=right border=0
+src="/gif/up.gif" width=20 height=20 alt="^"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="../index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="../a-z.htm"><img src="/gif/a-z.gif" width=40 height=40
+alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="../copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>

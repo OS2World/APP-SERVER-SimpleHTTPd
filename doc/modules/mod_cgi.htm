@@ -1,0 +1,147 @@
+<html><head>
+<title>SimpleHTTPd - Module MOD_cgi</title>
+</head><body background="/gif/paper.gif" fixed>
+
+<img src="/stat?config">
+
+<table noborder width="100%">
+<tr><td align=center>
+<img src="/gif/tools2.gif" width=40 height=40 alt="Installation">
+</td><td valign=center><font size=+2>
+Configuration of the Module <tt>MOD_cgi</tt>
+</font></td></tr>
+</table>
+
+<a name="configuration"></a>
+<a name="MOD_cgi"></a>
+
+<p>
+The module <tt>MOD_cgi</tt> provides a <i>Common Gateway Interface</i> (CGI)
+for external routines, that are not implemented as server loadable modules but
+executable or scripts (batch programs). The main characteristics of CGI
+programs and scripts are:<ul>
+<li>CGI programs or scripts receive data via command line parameters and
+console input (<i>stdin</i> - only on HTTP methods <tt>PUT</tt> or
+<tt>POST</tt>).
+<li>CGI programs or scripts send data via command line output (<i>stdout</i>).
+</ul>
+</p>
+
+<p>
+In the server's binary directory, you can find two sample of CGI programming.
+The <tt>cgi_prog.c</tt> C sample shows the programming of a CGI in the
+programming language C, the executable
+<a href="/bin/cgi_prog.exe"><tt>cgi_prog.exe</tt></a> (OS/2, Windows) or
+<a href="/bin/cgi_prog"><tt>cgi_prog</tt></a> (Unix) is stored there, two.
+The <tt>cgi_test.bat</tt> (Windows), <tt>cgi_test.cmd</tt> (OS/2) or
+<tt>cgi_test.sh</tt> (Unix) file shows a sample CGI written as batch or shell
+script. It's output can be displayed:<ul>
+<li><a href="/bin/cgi_test.bat">click here for Windows</a>
+<li><a href="/bin/cgi_test.cmd">click here for OS/2</a>
+<li><a href="/bin/cgi_test.sh">click here for Unix</a>
+</ul>
+<font size=-1><b><u>Note:</u></b><br>
+Under Windows and Unix it is necessary to use the file name of the CGI batch
+or script as is. Under OS/2, the extension <tt>.cmd</tt> may be omitted, since
+the OS automatically adds the extension. Under both OS/2 and Windows the
+extension <tt>.exe</tt> may be omitted, too.</font>
+</p>
+
+<h2>Output conventions for CGIs</h2>
+
+<p>
+The CGI program or script has to provide the WWW server with these kinds of
+output lines:<ol>
+<li><font color="red">HTTP response code (optional)</font>
+<li><font color="green">HTTP response header</font>
+<li>HTTP response data
+</ol>
+</p>
+
+<p>
+The <u>response code</u> is an optional one line information. It has to be the
+first line in output and must start with the letters '<tt>HTTP/</tt>'. It
+contains HTTP version, return code and return message. If the line is missing,
+a default answer is created:<pre>
+        HTTP/1.0 200 OK
+</pre>
+</p>
+
+<p>
+The next lines up to a blank line are treaten as <u>header lines</u>. The CGI
+should create at least a line '<tt>Content-type: xxx</tt>', where
+<tt><i>xxx</i></tt> is the valid content type of the following page. The blank
+line is treaten as divider. All following lines up to the end of the output
+are <u>data lines</u>. A sample output could be like this:
+<div align=center><table border=1 width="80%"><tr><td>
+<pre>
+    <font color="red">HTTP/1.0 200 OK</font>
+    <font color="green">Content-type: text/html</font>
+    <font color="green">Expires: Mon, August 10, 1998 12:00:00</font>
+
+    &lt;html&gt;
+    &lt;title&gt;Sample CGI output page&lt;/title&gt;
+    &lt;/html&gt;&lt;body color=&quot;white&quot;&gt;
+    &lt;h1&gt;Sample CGI output page&lt;/h1&gt;
+    &lt;p&gt;This is a stupid little test.&lt;/p&gt;
+    &lt;/body&gt;
+    &lt;/html&gt;</pre>
+</td></tr></table></div>
+</p>
+
+<h2>Configuration of <tt>MOD_cgi</tt></h2>
+
+<p>
+... is not necessary. You only have to set the translation path in the
+<a href="../config.htm#admin_section"><i>Access Path</i></a> menue of the
+<a href="/admin">administration section</a> (plus set the handling mechanism
+to the module <tt>MOD_cgi</tt>). Under Unix the OS automatically associates
+the right command line processor (Perl interpreter, sh, etc.) to the script
+or executes directly. Under OS/2 direct execution of binaries, batch or Rexx
+scripts is possible, under windows only binaries and batch scripts are
+executable. If you want to run Perl scripts under OS/2 or windows, you have
+to write a wrapper script (batch script calling the perl interpreter with the
+perl script name as parameter).
+</p>
+
+<! --- reference to previous and next chapter ------------------------------- >
+<a href="../config.htm#admin_modules"><img align=right border=0
+src="/gif/up.gif" width=20 height=20 alt="^"></a>
+<br clear=all>
+
+<! --- footer --------------------------------------------------------------- >
+<hr><table noborder width="100%">
+<tr><td><table>
+<tr><td align=left valign=top><! --- Table of Contents -------------- >
+<table><tr><td align=center valign=top>
+<a href="../index.htm"><img src="/gif/book.gif" width=40 height=40
+alt="Table of Contents"></a></td></tr><tr><td align=center><font size=-3>
+Table of<br>Contents
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Index ------------------------- >
+<table><tr><td align=center valign=top>
+<a href="../a-z.htm"><img src="/gif/a-z.gif" width=40 height=40
+alt="Index"></a>
+</td></tr><tr><td align=center><font size=-3>
+Index A-Z
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Server Administration --------- >
+<table><tr><td align=center valign=top>
+<a href="/admin"><img src="/gif/tools.gif" width=40 height=40
+alt="Server Administration"></a></td></tr><tr><td align=center><font size=-3>
+Server Ad-<br>ministration
+</font></td></tr></table>
+</td><td align=left valign=top><! --- Copyright --------------------- >
+<table><tr><td align=center valign=top>
+<a href="../copyrght.htm"><img src="/gif/sign.gif" width=40 height=40
+alt="Copyright"></a></td></tr><tr><td align=center><font size=-3>
+Copyright<br>Notes
+</font></td></tr></table>
+</table>
+<td align=right valign=top><! --- Copyright Info -------------------- >
+<font size=-2>&copy. 1998-2000 by Dirk Ohme</font>
+</td></tr>
+</table>
+<! --- footer --------------------------------------------------------------- >
+
+</body></html>
